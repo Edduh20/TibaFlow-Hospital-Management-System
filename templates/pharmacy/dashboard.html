@@ -1,0 +1,29 @@
+{% extends 'base.html' %}
+
+{% block title %}Pharmacy Dashboard - TibaFlow HMS{% endblock %}
+
+{% block content %}
+<section class="dashboard-page">
+    <div class="dashboard-hero">
+        <div>
+            <p class="eyebrow">Pharmacy counter</p>
+            <h1>{% if user.full_name %}{{ user.full_name }}{% else %}{{ user.username }}{% endif %}</h1>
+            <p>Dispense prescriptions, manage stock, and keep orders moving.</p>
+        </div>
+        <span class="date-pill"><i class="far fa-calendar-check"></i>{% now "F j, Y" %}</span>
+    </div>
+
+    <div class="stats-grid">
+        <article class="stat-card"><span class="stat-icon tone-blue"><i class="fas fa-file-prescription"></i></span><div><p class="stat-label">Pending Prescriptions</p><p class="stat-value">23</p><p class="stat-change">7 priority</p></div><span class="sparkline"></span></article>
+        <article class="stat-card"><span class="stat-icon tone-green"><i class="fas fa-pills"></i></span><div><p class="stat-label">Dispensed Today</p><p class="stat-value">64</p><p class="stat-change">+18% from yesterday</p></div><span class="sparkline"></span></article>
+        <article class="stat-card"><span class="stat-icon tone-amber"><i class="fas fa-box-open"></i></span><div><p class="stat-label">Low Stock</p><p class="stat-value">8</p><p class="stat-change">Needs reorder</p></div><span class="sparkline"></span></article>
+        <article class="stat-card"><span class="stat-icon tone-purple"><i class="fas fa-truck-medical"></i></span><div><p class="stat-label">Incoming Orders</p><p class="stat-value">5</p><p class="stat-change">2 due today</p></div><span class="sparkline"></span></article>
+    </div>
+
+    <div class="role-grid">
+        <article class="role-card"><span class="stat-icon tone-blue"><i class="fas fa-file-prescription"></i></span><h2>Pending Prescriptions</h2><p>Review prescriptions waiting to be prepared and dispensed.</p><a href="#" class="btn btn-primary">View</a></article>
+        <article class="role-card"><span class="stat-icon tone-green"><i class="fas fa-capsules"></i></span><h2>Dispense Medicine</h2><p>Record dispensed medication and update prescription status.</p><a href="#" class="btn btn-success">Dispense</a></article>
+        <article class="role-card"><span class="stat-icon tone-amber"><i class="fas fa-boxes-stacked"></i></span><h2>Stock Review</h2><p>Check stock levels, expiries, and reorder requirements.</p><a href="#" class="btn btn-warning">Review Stock</a></article>
+    </div>
+</section>
+{% endblock %}

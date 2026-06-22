@@ -1,0 +1,29 @@
+{% extends 'base.html' %}
+
+{% block title %}Triage Dashboard - TibaFlow HMS{% endblock %}
+
+{% block content %}
+<section class="dashboard-page">
+    <div class="dashboard-hero">
+        <div>
+            <p class="eyebrow">Triage station</p>
+            <h1>{% if user.full_name %}{{ user.full_name }}{% else %}{{ user.username }}{% endif %}</h1>
+            <p>Assess urgency, capture vitals, and route patients to the right team.</p>
+        </div>
+        <span class="date-pill"><i class="far fa-calendar-check"></i>{% now "F j, Y" %}</span>
+    </div>
+
+    <div class="stats-grid">
+        <article class="stat-card"><span class="stat-icon tone-green"><i class="fas fa-heart-pulse"></i></span><div><p class="stat-label">Vitals Taken</p><p class="stat-value">31</p><p class="stat-change">+9 today</p></div><span class="sparkline"></span></article>
+        <article class="stat-card"><span class="stat-icon tone-red"><i class="fas fa-triangle-exclamation"></i></span><div><p class="stat-label">Emergency Cases</p><p class="stat-value">4</p><p class="stat-change">2 active</p></div><span class="sparkline"></span></article>
+        <article class="stat-card"><span class="stat-icon tone-blue"><i class="fas fa-user-doctor"></i></span><div><p class="stat-label">Sent to Doctor</p><p class="stat-value">22</p><p class="stat-change">+6 this shift</p></div><span class="sparkline"></span></article>
+        <article class="stat-card"><span class="stat-icon tone-amber"><i class="far fa-clock"></i></span><div><p class="stat-label">Queue Time</p><p class="stat-value">9m</p><p class="stat-change">Stable</p></div><span class="sparkline"></span></article>
+    </div>
+
+    <div class="role-grid">
+        <article class="role-card"><span class="stat-icon tone-green"><i class="fas fa-stethoscope"></i></span><h2>Take Vitals</h2><p>Record blood pressure, temperature, pulse, oxygen, and symptoms.</p><a href="#" class="btn btn-success">Start</a></article>
+        <article class="role-card"><span class="stat-icon tone-red"><i class="fas fa-kit-medical"></i></span><h2>Emergency Cases</h2><p>Prioritize high-risk patients and escalate urgent care immediately.</p><a href="#" class="btn btn-danger">View Cases</a></article>
+        <article class="role-card"><span class="stat-icon tone-blue"><i class="fas fa-user-doctor"></i></span><h2>Send to Doctor</h2><p>Route assessed patients with triage notes and priority level.</p><a href="#" class="btn btn-primary">Send</a></article>
+    </div>
+</section>
+{% endblock %}

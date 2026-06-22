@@ -1,0 +1,29 @@
+{% extends 'base.html' %}
+
+{% block title %}Reception Dashboard - TibaFlow HMS{% endblock %}
+
+{% block content %}
+<section class="dashboard-page">
+    <div class="dashboard-hero">
+        <div>
+            <p class="eyebrow">Front desk overview</p>
+            <h1>{% if user.full_name %}{{ user.full_name }}{% else %}{{ user.username }}{% endif %}</h1>
+            <p>Register visits, coordinate appointments, and keep patient flow moving.</p>
+        </div>
+        <span class="date-pill"><i class="far fa-calendar-check"></i>{% now "F j, Y" %}</span>
+    </div>
+
+    <div class="stats-grid">
+        <article class="stat-card"><span class="stat-icon tone-blue"><i class="fas fa-user-plus"></i></span><div><p class="stat-label">New Patients</p><p class="stat-value">17</p><p class="stat-change">+5 today</p></div><span class="sparkline"></span></article>
+        <article class="stat-card"><span class="stat-icon tone-green"><i class="far fa-calendar-check"></i></span><div><p class="stat-label">Appointments</p><p class="stat-value">42</p><p class="stat-change">12 checked in</p></div><span class="sparkline"></span></article>
+        <article class="stat-card"><span class="stat-icon tone-amber"><i class="fas fa-receipt"></i></span><div><p class="stat-label">Payments</p><p class="stat-value">28</p><p class="stat-change">6 pending</p></div><span class="sparkline"></span></article>
+        <article class="stat-card"><span class="stat-icon tone-purple"><i class="fas fa-person-walking-arrow-right"></i></span><div><p class="stat-label">Queue</p><p class="stat-value">19</p><p class="stat-change">-3 in last hour</p></div><span class="sparkline"></span></article>
+    </div>
+
+    <div class="role-grid">
+        <article class="role-card"><span class="stat-icon tone-blue"><i class="fas fa-user-plus"></i></span><h2>Register New Patient</h2><p>Create a patient profile and start today's hospital visit.</p><a href="#" class="btn btn-primary">Register</a></article>
+        <article class="role-card"><span class="stat-icon tone-green"><i class="far fa-calendar-check"></i></span><h2>Today's Appointments</h2><p>Review schedules, check-ins, and patient arrival status.</p><a href="#" class="btn btn-success">View Schedule</a></article>
+        <article class="role-card"><span class="stat-icon tone-amber"><i class="fas fa-file-invoice-dollar"></i></span><h2>Verify Payments</h2><p>Confirm payments before patients proceed to consultation.</p><a href="#" class="btn btn-warning">Verify</a></article>
+    </div>
+</section>
+{% endblock %}
