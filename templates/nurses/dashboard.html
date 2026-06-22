@@ -1,0 +1,29 @@
+{% extends 'base.html' %}
+
+{% block title %}Nurse Dashboard - TibaFlow HMS{% endblock %}
+
+{% block content %}
+<section class="dashboard-page">
+    <div class="dashboard-hero">
+        <div>
+            <p class="eyebrow">Nursing desk</p>
+            <h1>Nurse {% if user.full_name %}{{ user.full_name }}{% else %}{{ user.username }}{% endif %}</h1>
+            <p>Coordinate bedside care, medication rounds, and patient updates.</p>
+        </div>
+        <span class="date-pill"><i class="far fa-calendar-check"></i>{% now "F j, Y" %}</span>
+    </div>
+
+    <div class="stats-grid">
+        <article class="stat-card"><span class="stat-icon tone-blue"><i class="fas fa-bed"></i></span><div><p class="stat-label">Assigned Beds</p><p class="stat-value">16</p><p class="stat-change">3 discharges planned</p></div><span class="sparkline"></span></article>
+        <article class="stat-card"><span class="stat-icon tone-green"><i class="fas fa-pills"></i></span><div><p class="stat-label">Medication Rounds</p><p class="stat-value">27</p><p class="stat-change">8 remaining</p></div><span class="sparkline"></span></article>
+        <article class="stat-card"><span class="stat-icon tone-purple"><i class="fas fa-clipboard-check"></i></span><div><p class="stat-label">Care Notes</p><p class="stat-value">34</p><p class="stat-change">+11 today</p></div><span class="sparkline"></span></article>
+        <article class="stat-card"><span class="stat-icon tone-red"><i class="fas fa-bell"></i></span><div><p class="stat-label">Alerts</p><p class="stat-value">5</p><p class="stat-change">2 urgent</p></div><span class="sparkline"></span></article>
+    </div>
+
+    <div class="role-grid">
+        <article class="role-card"><span class="stat-icon tone-blue"><i class="fas fa-bed-pulse"></i></span><h2>Patient Care</h2><p>Review assigned patients, care plans, and bedside observations.</p><a href="#" class="btn btn-primary">View</a></article>
+        <article class="role-card"><span class="stat-icon tone-green"><i class="fas fa-capsules"></i></span><h2>Medication Admin</h2><p>Track medication rounds and record administered doses.</p><a href="#" class="btn btn-success">Administer</a></article>
+        <article class="role-card"><span class="stat-icon tone-purple"><i class="fas fa-comment-medical"></i></span><h2>Patient Feedback</h2><p>Send observations and patient status updates to the doctor.</p><a href="#" class="btn btn-primary">Send</a></article>
+    </div>
+</section>
+{% endblock %}

@@ -1,0 +1,26 @@
+{% extends 'base.html' %}
+{% load crispy_forms_tags %}
+
+{% block title %}Register - TibaFlow HMS{% endblock %}
+
+{% block content %}
+<section class="auth-page">
+    <div class="auth-card auth-card-wide">
+        <div class="auth-header">
+            <span class="stat-icon tone-green"><i class="fas fa-user-plus"></i></span>
+            <div>
+                <p class="eyebrow">Create access</p>
+                <h1>Register staff account</h1>
+            </div>
+        </div>
+        <form method="post">
+            {% csrf_token %}
+            {{ form|crispy }}
+            <button type="submit" class="btn btn-success w-100 mt-3">
+                <i class="fas fa-user-plus me-2"></i>Register
+            </button>
+        </form>
+        <p class="auth-link">Already have an account? <a href="{% url 'accounts:login' %}">Login here</a></p>
+    </div>
+</section>
+{% endblock %}

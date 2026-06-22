@@ -1,0 +1,29 @@
+{% extends 'base.html' %}
+
+{% block title %}Laboratory Dashboard - TibaFlow HMS{% endblock %}
+
+{% block content %}
+<section class="dashboard-page">
+    <div class="dashboard-hero">
+        <div>
+            <p class="eyebrow">Laboratory queue</p>
+            <h1>{% if user.full_name %}{{ user.full_name }}{% else %}{{ user.username }}{% endif %}</h1>
+            <p>Process requests, record results, and keep clinicians updated.</p>
+        </div>
+        <span class="date-pill"><i class="far fa-calendar-check"></i>{% now "F j, Y" %}</span>
+    </div>
+
+    <div class="stats-grid">
+        <article class="stat-card"><span class="stat-icon tone-blue"><i class="fas fa-vial"></i></span><div><p class="stat-label">Pending Tests</p><p class="stat-value">36</p><p class="stat-change">9 urgent</p></div><span class="sparkline"></span></article>
+        <article class="stat-card"><span class="stat-icon tone-green"><i class="fas fa-clipboard-check"></i></span><div><p class="stat-label">Results Submitted</p><p class="stat-value">58</p><p class="stat-change">+14 today</p></div><span class="sparkline"></span></article>
+        <article class="stat-card"><span class="stat-icon tone-amber"><i class="fas fa-microscope"></i></span><div><p class="stat-label">In Progress</p><p class="stat-value">12</p><p class="stat-change">Avg. 28m</p></div><span class="sparkline"></span></article>
+        <article class="stat-card"><span class="stat-icon tone-purple"><i class="far fa-file-lines"></i></span><div><p class="stat-label">Reports</p><p class="stat-value">44</p><p class="stat-change">Ready for review</p></div><span class="sparkline"></span></article>
+    </div>
+
+    <div class="role-grid">
+        <article class="role-card"><span class="stat-icon tone-blue"><i class="fas fa-flask-vial"></i></span><h2>Pending Tests</h2><p>Review lab orders waiting to be collected or processed.</p><a href="#" class="btn btn-primary">View</a></article>
+        <article class="role-card"><span class="stat-icon tone-green"><i class="fas fa-file-medical"></i></span><h2>Submit Results</h2><p>Enter findings and release verified results to care teams.</p><a href="#" class="btn btn-success">Submit</a></article>
+        <article class="role-card"><span class="stat-icon tone-amber"><i class="fas fa-triangle-exclamation"></i></span><h2>Critical Results</h2><p>Flag urgent values and notify clinicians for fast action.</p><a href="#" class="btn btn-warning">Review</a></article>
+    </div>
+</section>
+{% endblock %}

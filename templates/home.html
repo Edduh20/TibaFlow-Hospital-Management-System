@@ -1,0 +1,48 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}TibaFlow HMS - Smart Hospital Management{% endblock %}
+
+{% block content %}
+<section class="landing-page">
+    <div class="landing-hero">
+        <div class="landing-copy">
+            <p class="landing-kicker">Smart Hospital Management</p>
+            <h1>TibaFlow HMS</h1>
+            <p class="landing-lede">Run appointments, patient records, pharmacy, laboratory, billing, and staff workflows from one calm command center.</p>
+            <div class="landing-actions">
+                {% if user.is_authenticated %}
+                    <a href="{% url 'core:dashboard' %}" class="btn btn-light btn-lg"><i class="fas fa-chart-line me-2"></i>Go to Dashboard</a>
+                {% else %}
+                    <a href="{% url 'accounts:login' %}" class="btn btn-light btn-lg"><i class="fas fa-right-to-bracket me-2"></i>Login</a>
+                    <a href="{% url 'accounts:register' %}" class="btn btn-outline-light btn-lg"><i class="fas fa-user-plus me-2"></i>Register</a>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <div class="landing-feature-band">
+        <article>
+            <span class="stat-icon tone-blue"><i class="far fa-calendar-check"></i></span>
+            <div>
+                <h2>Appointments</h2>
+                <p>Schedule, check in, and route patients faster.</p>
+            </div>
+        </article>
+        <article>
+            <span class="stat-icon tone-green"><i class="fas fa-user-doctor"></i></span>
+            <div>
+                <h2>Clinical Flow</h2>
+                <p>Connect triage, doctors, nurses, lab, and pharmacy.</p>
+            </div>
+        </article>
+        <article>
+            <span class="stat-icon tone-amber"><i class="fas fa-chart-line"></i></span>
+            <div>
+                <h2>Hospital Insight</h2>
+                <p>See operations, revenue, and department activity clearly.</p>
+            </div>
+        </article>
+    </div>
+</section>
+{% endblock %}

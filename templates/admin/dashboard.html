@@ -1,0 +1,166 @@
+{% extends 'base.html' %}
+
+{% block title %}Admin Dashboard - TibaFlow HMS{% endblock %}
+
+{% block content %}
+<section class="dashboard-page">
+    <div class="dashboard-hero">
+        <div>
+            <p class="eyebrow">Welcome back,</p>
+            <h1>Dr. {% if user.full_name %}{{ user.full_name }}{% else %}{{ user.username }}{% endif %}</h1>
+            <p>Here's what's happening in your hospital today.</p>
+        </div>
+        <span class="date-pill"><i class="far fa-calendar-check"></i>{% now "F j, Y" %}<i class="fas fa-chevron-down"></i></span>
+    </div>
+
+    <div class="stats-grid">
+        <article class="stat-card">
+            <span class="stat-icon tone-purple"><i class="fas fa-users"></i></span>
+            <div>
+                <p class="stat-label">Total Patients</p>
+                <p class="stat-value">1,246</p>
+                <p class="stat-change">+12% from yesterday</p>
+            </div>
+            <span class="sparkline" aria-hidden="true"></span>
+        </article>
+        <article class="stat-card">
+            <span class="stat-icon tone-blue"><i class="far fa-calendar-check"></i></span>
+            <div>
+                <p class="stat-label">Appointments</p>
+                <p class="stat-value">89</p>
+                <p class="stat-change">+8% from yesterday</p>
+            </div>
+            <span class="sparkline" aria-hidden="true"></span>
+        </article>
+        <article class="stat-card">
+            <span class="stat-icon tone-green"><i class="fas fa-bed-pulse"></i></span>
+            <div>
+                <p class="stat-label">Admitted Patients</p>
+                <p class="stat-value">32</p>
+                <p class="stat-change">+5% from yesterday</p>
+            </div>
+            <span class="sparkline" aria-hidden="true"></span>
+        </article>
+        <article class="stat-card">
+            <span class="stat-icon tone-amber"><i class="fas fa-dollar-sign"></i></span>
+            <div>
+                <p class="stat-label">Total Revenue</p>
+                <p class="stat-value">$45,231</p>
+                <p class="stat-change">+18% from yesterday</p>
+            </div>
+            <span class="sparkline" aria-hidden="true"></span>
+        </article>
+    </div>
+
+    <div class="dashboard-grid">
+        <section class="panel">
+            <div class="panel-header">
+                <h2 class="panel-title">Appointments Overview</h2>
+                <span class="select-pill">This Week <i class="fas fa-chevron-down"></i></span>
+            </div>
+            <div class="line-chart" aria-label="Appointments overview chart">
+                <div class="chart-labels">
+                    <span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span>Fri</span><span>Sat</span><span>Sun</span>
+                </div>
+            </div>
+        </section>
+
+        <section class="panel">
+            <div class="panel-header">
+                <h2 class="panel-title">Department Distribution</h2>
+            </div>
+            <div class="donut-wrap">
+                <div class="donut" aria-label="Department distribution chart"></div>
+                <ul class="legend">
+                    <li><span class="legend-dot" style="background:#0d6efd"></span><strong>40%</strong><span>General Medicine</span></li>
+                    <li><span class="legend-dot" style="background:#2fbe7a"></span><strong>20%</strong><span>Pediatrics</span></li>
+                    <li><span class="legend-dot" style="background:#f5a524"></span><strong>15%</strong><span>Surgery</span></li>
+                    <li><span class="legend-dot" style="background:#7b61ff"></span><strong>15%</strong><span>Orthopedics</span></li>
+                    <li><span class="legend-dot" style="background:#8496b6"></span><strong>10%</strong><span>Others</span></li>
+                </ul>
+            </div>
+        </section>
+    </div>
+
+    <div class="dashboard-grid-bottom">
+        <section class="panel">
+            <div class="panel-header">
+                <h2 class="panel-title">Recent Appointments</h2>
+                <a class="view-link" href="#">View All</a>
+            </div>
+            <div class="appointment-list">
+                <div class="appointment-row">
+                    <span class="patient-avatar">SJ</span>
+                    <div><p class="row-title">Sarah Johnson</p><p class="row-sub">General Medicine</p></div>
+                    <span class="row-meta"><i class="far fa-calendar"></i>{% now "M j, Y" %}</span>
+                    <span class="row-meta"><i class="far fa-clock"></i>09:30 AM</span>
+                    <span class="status-pill status-good">Confirmed</span>
+                </div>
+                <div class="appointment-row">
+                    <span class="patient-avatar">MB</span>
+                    <div><p class="row-title">Michael Brown</p><p class="row-sub">Pediatrics</p></div>
+                    <span class="row-meta"><i class="far fa-calendar"></i>{% now "M j, Y" %}</span>
+                    <span class="row-meta"><i class="far fa-clock"></i>10:00 AM</span>
+                    <span class="status-pill status-wait">Pending</span>
+                </div>
+                <div class="appointment-row">
+                    <span class="patient-avatar">ED</span>
+                    <div><p class="row-title">Emily Davis</p><p class="row-sub">Orthopedics</p></div>
+                    <span class="row-meta"><i class="far fa-calendar"></i>{% now "M j, Y" %}</span>
+                    <span class="row-meta"><i class="far fa-clock"></i>11:00 AM</span>
+                    <span class="status-pill status-good">Confirmed</span>
+                </div>
+                <div class="appointment-row">
+                    <span class="patient-avatar">JW</span>
+                    <div><p class="row-title">James Wilson</p><p class="row-sub">Surgery</p></div>
+                    <span class="row-meta"><i class="far fa-calendar"></i>{% now "M j, Y" %}</span>
+                    <span class="row-meta"><i class="far fa-clock"></i>02:30 PM</span>
+                    <span class="status-pill status-wait">Pending</span>
+                </div>
+            </div>
+        </section>
+
+        <section class="panel">
+            <div class="panel-header">
+                <h2 class="panel-title">Hospital Updates</h2>
+                <a class="view-link" href="#">View All</a>
+            </div>
+            <div class="updates-list">
+                <div class="update-row">
+                    <span class="update-icon tone-blue"><i class="fas fa-user-doctor"></i></span>
+                    <div><p class="row-title">New doctor Dr. Sarah Wilson joined</p><p class="row-sub">Pediatrics Department</p></div>
+                    <span class="row-meta">2 hours ago</span>
+                </div>
+                <div class="update-row">
+                    <span class="update-icon tone-purple"><i class="fas fa-flask"></i></span>
+                    <div><p class="row-title">System maintenance scheduled</p><p class="row-sub">June 25, 2026 at 02:00 AM</p></div>
+                    <span class="row-meta">5 hours ago</span>
+                </div>
+                <div class="update-row">
+                    <span class="update-icon tone-green"><i class="fas fa-microscope"></i></span>
+                    <div><p class="row-title">New lab equipment added</p><p class="row-sub">Pathology Department</p></div>
+                    <span class="row-meta">1 day ago</span>
+                </div>
+                <div class="update-row">
+                    <span class="update-icon tone-blue"><i class="far fa-file-lines"></i></span>
+                    <div><p class="row-title">Monthly report generated</p><p class="row-sub">May 2026 Summary</p></div>
+                    <span class="row-meta">2 days ago</span>
+                </div>
+            </div>
+        </section>
+
+        <section class="panel">
+            <div class="panel-header">
+                <h2 class="panel-title">Quick Actions</h2>
+            </div>
+            <div class="quick-actions">
+                <a class="action-btn action-blue" href="#"><i class="far fa-calendar-plus"></i>Book Appointment</a>
+                <a class="action-btn action-green" href="#"><i class="fas fa-user-plus"></i>Add New Patient</a>
+                <a class="action-btn action-purple" href="#"><i class="far fa-file-lines"></i>Generate Report</a>
+                <a class="action-btn action-amber" href="#"><i class="fas fa-capsules"></i>Pharmacy Stock</a>
+                <a class="action-btn action-red" href="#"><i class="fas fa-flask-vial"></i>Lab Test</a>
+            </div>
+        </section>
+    </div>
+</section>
+{% endblock %}

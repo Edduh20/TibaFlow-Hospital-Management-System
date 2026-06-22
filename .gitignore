@@ -1,0 +1,102 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+
+# Django
+*.log
+*.pot
+*.pyc
+local_settings.py
+db.sqlite3
+db.sqlite3-journal
+media/
+staticfiles/
+static/
+
+# Database
+*.db
+*.sqlite
+*.sqlite3
+
+# Environment variables
+.env
+.env.local
+.env.*.local
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+
+# Testing
+.coverage
+htmlcov/
+.pytest_cache/
+.tox/
+.coverage.*
+*.cover
+.hypothesis/
+
+# MyPy
+.mypy_cache/
+.dmypy.json
+dmypy.json
+
+# Pyre type checker
+.pyre/
+
+# pytype static type analyzer
+.pytype/
+
+# Cython debug symbols
+cython_debug/
+
+# Node modules (if any)
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Docker
+.docker/
+docker-compose.override.yml
+
+# Uploads
+uploads/
+media/
+profile_pics/
+hospital_logos/
+
+# Secrets
+*.pem
+*.key
+*.crt
+*.p12
+*.pfx
+
+# Project specific
+hospital/__pycache__/
+accounts/__pycache__/
+core/__pycache__/
+patients/__pycache__/
+reception/__pycache__/
+triage/__pycache__/
+doctors/__pycache__/
+pharmacy/__pycache__/
+laboratory/__pycache__/
+nurses/__pycache__/
+api/__pycache__/
+*/migrations/
+!*/migrations/__init__.py
