@@ -1,0 +1,33 @@
+# Core DS/ML
+pandas
+numpy
+scikit-learn
+matplotlib
+seaborn
+xgboost
+lightgbm
+joblib
+mlflow
+
+# API
+fastapi
+uvicorn
+pydantic
+
+# RAG
+langchain
+langchain-community
+faiss-cpu
+sentence-transformers
+huggingface-hub
+transformers
+pypdf
+openai              
+
+# Config & utils
+pyyaml
+python-dotenv
+
+# Dev
+jupyter
+pytest
