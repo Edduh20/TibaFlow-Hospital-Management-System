@@ -1,0 +1,44 @@
+{% extends 'base.html' %}
+{% load crispy_forms_tags %}
+
+{% block title %}Create Prescription - TibaFlow HMS{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card">
+                <div class="card-header bg-success text-white">
+                    <h4 class="mb-0">
+                        <i class="fas fa-prescription me-2"></i>Create Prescription
+                    </h4>
+                </div>
+                <div class="card-body">
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle me-2"></i>
+                        <strong>Patient:</strong> {{ patient.full_name }}<br>
+                        <strong>Record:</strong> {{ record.visit.visit_number }}
+                    </div>
+                    <form method="post">
+                        {% csrf_token %}
+                        {{ form|crispy }}
+                        <div class="d-flex flex-wrap justify-content-between mt-3 gap-2">
+                            <a href="{% url 'doctors:view_patient' record.visit.id %}" class="btn btn-secondary">
+                                <i class="fas fa-arrow-left me-1"></i>Cancel
+                            </a>
+                            <div>
+                                <button type="submit" name="save" class="btn btn-success">
+                                    <i class="fas fa-save me-1"></i>Save Prescription
+                                </button>
+                                <button type="submit" name="send_to_pharmacy" class="btn btn-primary">
+                                    <i class="fas fa-pills me-1"></i>Save & Send to Pharmacy
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

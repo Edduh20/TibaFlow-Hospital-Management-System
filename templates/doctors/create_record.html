@@ -1,0 +1,201 @@
+{% extends 'base.html' %}
+{% load crispy_forms_tags %}
+
+{% block title %}Medical Record - TibaFlow HMS{% endblock %}
+
+{% block extra_css %}
+<style>
+    .form-section {
+        background: white;
+        border-radius: 12px;
+        padding: 1.5rem;
+        margin-bottom: 1.5rem;
+        border: 1px solid rgba(0,0,0,0.05);
+    }
+    .form-section h5 {
+        color: #0d6efd;
+        font-weight: 600;
+        margin-bottom: 1rem;
+    }
+    .ml-suggestion-box {
+        background: linear-gradient(135deg, #f0f7ff, #e8f0fe);
+        border: 2px dashed #0d6efd;
+        border-radius: 10px;
+        padding: 1rem;
+        margin: 1rem 0;
+    }
+    .ml-suggestion-box i {
+        color: #0d6efd;
+        font-size: 1.5rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="h2 mb-1">
+                <i class="fas fa-notes-medical text-primary me-2"></i>
+                {% if existing_record %}Edit{% else %}Create{% endif %} Medical Record
+            </h1>
+            <p class="text-muted">
+                Patient: <strong>{{ patient.full_name }}</strong> 
+                | Visit: <strong>{{ visit.visit_number }}</strong>
+            </p>
+        </div>
+        <div>
+            <a href="{% url 'doctors:view_patient' visit.id %}" class="btn btn-secondary">
+                <i class="fas fa-arrow-left me-1"></i>Back to Patient
+            </a>
+        </div>
+    </div>
+
+    <form method="post">
+        {% csrf_token %}
+
+        <!-- Symptoms Section -->
+        <div class="form-section">
+            <h5><i class="fas fa-thermometer-half me-2"></i>Symptoms</h5>
+            <div class="row">
+                <div class="col-md-8">
+                    {{ form.symptoms|as_crispy_field }}
+                </div>
+                <div class="col-md-4">
+                    {{ form.symptom_duration|as_crispy_field }}
+                    {{ form.symptom_severity|as_crispy_field }}
+                </div>
+            </div>
+            {{ form.clinical_notes|as_crispy_field }}
+        </div>
+
+        <!-- ML Suggestion Section -->
+        <div class="form-section">
+            <h5><i class="fas fa-robot me-2"></i>ML Diagnosis Assistant</h5>
+            <div class="ml-suggestion-box">
+                <div class="d-flex align-items-start">
+                    <i class="fas fa-robot me-3"></i>
+                    <div class="flex-grow-1">
+                        <p class="mb-1"><strong>ML Suggestions will appear here</strong></p>
+                        <p class="text-muted small mb-0">
+                            Enter symptoms above and click "Get ML Suggestion" to receive AI-powered diagnosis suggestions.
+                        </p>
+                        <button type="button" class="btn btn-outline-primary btn-sm mt-2" onclick="getMLSuggestion()">
+                            <i class="fas fa-brain me-1"></i>Get ML Suggestion
+                        </button>
+                    </div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-md-6">
+                    {{ form.ml_suggestion|as_crispy_field }}
+                </div>
+                <div class="col-md-6">
+                    {{ form.ml_confidence|as_crispy_field }}
+                    {{ form.ml_medication_suggestions|as_crispy_field }}
+                </div>
+            </div>
+        </div>
+
+        <!-- Diagnosis Section -->
+        <div class="form-section">
+            <h5><i class="fas fa-stethoscope me-2"></i>Diagnosis & Treatment</h5>
+            {{ form.diagnosis|as_crispy_field }}
+            {{ form.diagnosis_code|as_crispy_field }}
+            {{ form.differential_diagnosis|as_crispy_field }}
+            {{ form.treatment_plan|as_crispy_field }}
+        </div>
+
+        <!-- Follow-up Section -->
+        <div class="form-section">
+            <h5><i class="fas fa-calendar-check me-2"></i>Follow-up</h5>
+            <div class="row">
+                <div class="col-md-6">
+                    {{ form.follow_up_date|as_crispy_field }}
+                </div>
+                <div class="col-md-6">
+                    {{ form.is_admitted|as_crispy_field }}
+                </div>
+            </div>
+            {{ form.follow_up_instructions|as_crispy_field }}
+        </div>
+
+        <!-- Referral Section -->
+        <div class="form-section">
+            <h5><i class="fas fa-share-alt me-2"></i>Referrals</h5>
+            {{ form.referral_notes|as_crispy_field }}
+            <div class="d-flex gap-3 mt-2">
+                <div class="form-check">
+                    <input class="form-check-input" type="checkbox" name="refer_lab" id="refer_lab">
+                    <label class="form-check-label" for="refer_lab">
+                        Refer to Lab
+                    </label>
+                </div>
+                <div class="form-check">
+                    <input class="form-check-input" type="checkbox" name="refer_imaging" id="refer_imaging">
+                    <label class="form-check-label" for="refer_imaging">
+                        Refer to Imaging
+                    </label>
+                </div>
+                <div class="form-check">
+                    <input class="form-check-input" type="checkbox" name="refer_specialist" id="refer_specialist">
+                    <label class="form-check-label" for="refer_specialist">
+                        Refer to Specialist
+                    </label>
+                </div>
+            </div>
+        </div>
+
+        <!-- Submit -->
+        <div class="d-flex justify-content-between">
+            <a href="{% url 'doctors:view_patient' visit.id %}" class="btn btn-secondary">
+                <i class="fas fa-times me-1"></i>Cancel
+            </a>
+            <div>
+                <button type="submit" name="save_draft" class="btn btn-warning me-2">
+                    <i class="fas fa-save me-1"></i>Save Draft
+                </button>
+                <button type="submit" class="btn btn-success">
+                    <i class="fas fa-check me-1"></i>Save & Complete
+                </button>
+            </div>
+        </div>
+    </form>
+</div>
+
+<script>
+function getMLSuggestion() {
+    const symptoms = document.querySelector('#id_symptoms').value;
+    if (!symptoms) {
+        alert('Please enter symptoms first.');
+        return;
+    }
+    
+    // Show loading state
+    const mlField = document.querySelector('#id_ml_suggestion');
+    mlField.value = 'Loading ML suggestion...';
+    
+    // Here you would call your ML API
+    // For now, simulate a response
+    setTimeout(() => {
+        // This would be replaced with actual API call
+        // fetch('/api/ml/diagnose/', {
+        //     method: 'POST',
+        //     headers: {'Content-Type': 'application/json'},
+        //     body: JSON.stringify({symptoms: symptoms})
+        // })
+        // .then(response => response.json())
+        // .then(data => {
+        //     document.querySelector('#id_ml_suggestion').value = data.diagnosis;
+        //     document.querySelector('#id_ml_confidence').value = data.confidence;
+        //     document.querySelector('#id_ml_medication_suggestions').value = data.medications;
+        // });
+        
+        // Simulated response
+        mlField.value = 'Based on symptoms: Possible diagnosis - Acute Respiratory Infection';
+        document.querySelector('#id_ml_confidence').value = '85';
+        document.querySelector('#id_ml_medication_suggestions').value = 'Amoxicillin 500mg, Paracetamol 500mg';
+    }, 1500);
+}
+</script>
+{% endblock %}

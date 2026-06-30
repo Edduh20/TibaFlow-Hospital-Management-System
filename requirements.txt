@@ -12,3 +12,4 @@ python-decouple==3.8
 sqlparse==0.5.5
 tablib==3.9.0
 tzdata==2026.2
+faker==25.0.0

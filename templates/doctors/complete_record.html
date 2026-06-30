@@ -1,0 +1,217 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Complete Medical Record - TibaFlow HMS{% endblock %}
+
+{% block extra_css %}
+<style>
+    .confirm-card {
+        border-radius: 12px;
+        border: none;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+        max-width: 600px;
+        margin: 0 auto;
+    }
+    .confirm-icon {
+        font-size: 4rem;
+        color: #28a745;
+    }
+    .patient-summary {
+        background: #f8f9fa;
+        border-radius: 10px;
+        padding: 1rem;
+    }
+    .patient-summary .label {
+        color: #6c757d;
+        font-size: 0.8rem;
+        font-weight: 600;
+    }
+    .patient-summary .value {
+        font-weight: 500;
+    }
+    .warning-box {
+        background: #fff3cd;
+        border: 1px solid #ffc107;
+        border-radius: 8px;
+        padding: 0.75rem 1rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card confirm-card">
+                <div class="card-header bg-success text-white text-center">
+                    <h4 class="mb-0">
+                        <i class="fas fa-check-circle me-2"></i>Complete Medical Record
+                    </h4>
+                </div>
+                <div class="card-body text-center">
+                    <!-- Icon -->
+                    <div class="mb-4">
+                        <i class="fas fa-notes-medical confirm-icon"></i>
+                    </div>
+
+                    <h3 class="mb-2">Ready to Complete This Record?</h3>
+                    <p class="text-muted mb-4">
+                        You are about to mark this medical record as completed. 
+                        This will unlock the visit for finalization.
+                    </p>
+
+                    <!-- Patient Summary -->
+                    <div class="patient-summary text-start mb-4">
+                        <div class="row">
+                            <div class="col-md-6 mb-2 mb-md-0">
+                                <div class="label">Patient Name</div>
+                                <div class="value">{{ record.patient.full_name }}</div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="label">Visit Number</div>
+                                <div class="value">{{ record.visit.visit_number }}</div>
+                            </div>
+                        </div>
+                        <div class="row mt-2">
+                            <div class="col-md-6 mb-2 mb-md-0">
+                                <div class="label">Age</div>
+                                <div class="value">{{ record.patient.age }} years</div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="label">Status</div>
+                                <div class="value">
+                                    <span class="badge bg-{% if record.is_completed %}success{% elif record.is_locked %}warning{% else %}info{% endif %}">
+                                        {% if record.is_completed %}
+                                            ✅ Completed
+                                        {% elif record.is_locked %}
+                                            🔒 Locked
+                                        {% else %}
+                                            📝 In Progress
+                                        {% endif %}
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                        {% if record.diagnosis %}
+                            <div class="row mt-2">
+                                <div class="col-12">
+                                    <div class="label">Diagnosis</div>
+                                    <div class="value">{{ record.diagnosis|truncatechars:100 }}</div>
+                                </div>
+                            </div>
+                        {% endif %}
+                    </div>
+
+                    <!-- Warning if locked -->
+                    {% if record.is_locked %}
+                        <div class="warning-box mb-4">
+                            <i class="fas fa-lock text-warning me-2"></i>
+                            <span class="text-warning fw-bold">This record is locked:</span>
+                            <span>{{ record.lock_reason }}</span>
+                        </div>
+                        <p class="text-muted small">
+                            <i class="fas fa-info-circle me-1"></i>
+                            You cannot complete this record while it's locked. 
+                            Please receive the pending results first.
+                        </p>
+                        <a href="{% url 'doctors:view_patient' record.visit.id %}" class="btn btn-secondary">
+                            <i class="fas fa-arrow-left me-1"></i>Back to Patient
+                        </a>
+                    {% elif record.is_completed %}
+                        <div class="alert alert-success">
+                            <i class="fas fa-check-circle me-2"></i>
+                            This record is already completed!
+                        </div>
+                        <a href="{% url 'doctors:view_patient' record.visit.id %}" class="btn btn-primary">
+                            <i class="fas fa-arrow-left me-1"></i>Back to Patient
+                        </a>
+                    {% else %}
+                        <!-- What happens when completed -->
+                        <div class="alert alert-info text-start mb-4">
+                            <h6 class="mb-2"><i class="fas fa-info-circle me-2"></i>What happens next?</h6>
+                            <ul class="mb-0 small">
+                                <li>The medical record will be marked as <strong>Completed</strong></li>
+                                <li>The visit will be unlocked for finalization</li>
+                                <li>You'll be able to use the <strong>"Complete Visit & Next"</strong> button</li>
+                                <li>The patient will be removed from your active queue</li>
+                            </ul>
+                        </div>
+
+                        <!-- Actions -->
+                        <div class="d-flex flex-wrap justify-content-center gap-3">
+                            <a href="{% url 'doctors:view_patient' record.visit.id %}" class="btn btn-secondary">
+                                <i class="fas fa-arrow-left me-1"></i>Cancel
+                            </a>
+                            <form method="post" class="d-inline">
+                                {% csrf_token %}
+                                <button type="submit" class="btn btn-success btn-lg">
+                                    <i class="fas fa-check me-2"></i>Yes, Complete Record
+                                </button>
+                            </form>
+                        </div>
+                        <p class="text-muted small mt-3">
+                            <i class="fas fa-exclamation-triangle text-warning me-1"></i>
+                            This action cannot be undone, but you can still edit the record later if needed.
+                        </p>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Record Preview -->
+            <div class="card mt-4">
+                <div class="card-header">
+                    <h6 class="mb-0">
+                        <i class="fas fa-file-medical me-2"></i>Record Summary
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <strong>Symptoms:</strong>
+                            <p class="text-muted small">{{ record.symptoms|default:'Not recorded' }}</p>
+                        </div>
+                        <div class="col-md-6">
+                            <strong>Severity:</strong>
+                            <p class="text-muted small">{{ record.symptom_severity }}/10</p>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-12">
+                            <strong>Diagnosis:</strong>
+                            <p class="text-muted small">{{ record.diagnosis|default:'Not recorded' }}</p>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-12">
+                            <strong>Treatment Plan:</strong>
+                            <p class="text-muted small">{{ record.treatment_plan|default:'Not recorded' }}</p>
+                        </div>
+                    </div>
+                    {% if record.ml_suggestion %}
+                        <div class="alert alert-info mt-2 small">
+                            <i class="fas fa-robot me-2"></i>
+                            <strong>ML Suggestion:</strong> {{ record.ml_suggestion }}
+                            {% if record.ml_confidence %}
+                                <span class="badge bg-info ms-2">{{ record.ml_confidence }}% confidence</span>
+                            {% endif %}
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Quick Actions -->
+            <div class="mt-4 d-flex flex-wrap justify-content-center gap-2">
+                <a href="{% url 'doctors:create_record' record.visit.id %}" class="btn btn-outline-primary btn-sm">
+                    <i class="fas fa-edit me-1"></i>Edit Record
+                </a>
+                <a href="{% url 'doctors:view_patient' record.visit.id %}" class="btn btn-outline-secondary btn-sm">
+                    <i class="fas fa-eye me-1"></i>View Patient
+                </a>
+                <a href="{% url 'doctors:dashboard' %}" class="btn btn-outline-dark btn-sm">
+                    <i class="fas fa-chart-line me-1"></i>Dashboard
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

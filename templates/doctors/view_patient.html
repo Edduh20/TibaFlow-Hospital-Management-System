@@ -1,0 +1,409 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}View Patient - TibaFlow HMS{% endblock %}
+
+{% block extra_css %}
+<style>
+    .patient-info-card {
+        background: linear-gradient(135deg, #f8f9fa, #e9ecef);
+        border-radius: 12px;
+        padding: 1.5rem;
+    }
+    .vital-card {
+        background: white;
+        border-radius: 10px;
+        padding: 1rem;
+        text-align: center;
+        border: 1px solid rgba(0,0,0,0.05);
+        transition: all 0.3s ease;
+    }
+    .vital-card:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+    }
+    .vital-card .vital-value {
+        font-size: 1.5rem;
+        font-weight: 700;
+    }
+    .vital-card .vital-label {
+        color: #6c757d;
+        font-size: 0.8rem;
+    }
+    .action-btn {
+        transition: all 0.3s ease;
+        margin: 2px;
+    }
+    .action-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 15px rgba(0,0,0,0.15);
+    }
+    .section-card {
+        border-radius: 12px;
+        border: none;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+    }
+    .section-card .card-header {
+        background: transparent;
+        border-bottom: 1px solid rgba(0,0,0,0.05);
+        font-weight: 600;
+    }
+    .status-badge {
+        font-size: 0.8rem;
+        padding: 0.3rem 0.8rem;
+    }
+    .priority-return-badge {
+        animation: pulse 2s infinite;
+    }
+    @keyframes pulse {
+        0% { opacity: 1; }
+        50% { opacity: 0.6; }
+        100% { opacity: 1; }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Patient Header -->
+    <div class="patient-info-card mb-4">
+        <div class="row align-items-center">
+            <div class="col-md-6">
+                <h2 class="h3 mb-1">
+                    <i class="fas fa-user-injured text-primary me-2"></i>
+                    {{ patient.full_name }}
+                </h2>
+                <div class="d-flex flex-wrap gap-3">
+                    <span class="text-muted">
+                        <i class="fas fa-calendar-alt me-1"></i>
+                        Age: {{ patient.age }} years
+                    </span>
+                    <span class="text-muted">
+                        <i class="fas fa-venus-mars me-1"></i>
+                        {{ patient.get_gender_display }}
+                    </span>
+                    <span class="text-muted">
+                        <i class="fas fa-id-card me-1"></i>
+                        Visit: {{ visit.visit_number }}
+                    </span>
+                    <span class="badge bg-primary">Visit #{{ visit.visit_type|title }}</span>
+                    {% if visit.is_priority_return %}
+                        <span class="badge bg-warning text-dark priority-return-badge">
+                            <i class="fas fa-undo me-1"></i> Returning from Tests
+                        </span>
+                    {% endif %}
+                    {% if visit.return_from_lab %}
+                        <span class="badge bg-info">
+                            <i class="fas fa-flask me-1"></i> Lab Results Ready
+                        </span>
+                    {% endif %}
+                    {% if visit.return_from_imaging %}
+                        <span class="badge bg-info">
+                            <i class="fas fa-x-ray me-1"></i> Imaging Results Ready
+                        </span>
+                    {% endif %}
+                </div>
+            </div>
+            <div class="col-md-6 text-md-end mt-3 mt-md-0">
+                <div class="d-flex flex-wrap justify-content-md-end gap-2">
+                    <!-- Show appropriate buttons based on record status -->
+                    {% if record %}
+                        {% if record.is_locked %}
+                            <span class="badge bg-warning text-dark status-badge">
+                                <i class="fas fa-lock me-1"></i> 🔒 Locked: {{ record.lock_reason }}
+                            </span>
+                            {% if record.workflow_status == 'lab_ordered' or record.workflow_status == 'lab_imaging_ordered' %}
+                                <a href="#" class="btn btn-danger btn-sm action-btn" onclick="cancelLabTests({{ record.id }})">
+                                    <i class="fas fa-times me-1"></i>Cancel Lab
+                                </a>
+                            {% endif %}
+                            {% if record.workflow_status == 'imaging_ordered' or record.workflow_status == 'lab_imaging_ordered' %}
+                                <a href="#" class="btn btn-danger btn-sm action-btn" onclick="cancelImaging({{ record.id }})">
+                                    <i class="fas fa-times me-1"></i>Cancel Imaging
+                                </a>
+                            {% endif %}
+                        {% elif record.is_completed %}
+                            <span class="badge bg-success status-badge">
+                                <i class="fas fa-check-circle me-1"></i> ✅ Record Completed
+                            </span>
+                            <!-- Show Complete Visit button ONLY when record is completed -->
+                            <button onclick="completeVisit({{ visit.id }})" class="btn btn-primary action-btn">
+                                <i class="fas fa-forward me-1"></i>⏭️ Complete Visit & Next
+                            </button>
+                        {% else %}
+                            <a href="{% url 'doctors:create_record' visit.id %}" class="btn btn-primary action-btn">
+                                <i class="fas fa-edit me-1"></i>✏️ Edit Record
+                            </a>
+                            <a href="{% url 'doctors:complete_record' record.id %}" class="btn btn-success action-btn">
+                                <i class="fas fa-check me-1"></i>✅ Complete Record
+                            </a>
+                        {% endif %}
+                    {% else %}
+                        <a href="{% url 'doctors:create_record' visit.id %}" class="btn btn-primary action-btn">
+                            <i class="fas fa-plus me-1"></i>📝 Create Medical Record
+                        </a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-4">
+        <!-- Patient Details -->
+        <div class="col-lg-4">
+            <!-- Vitals -->
+            <div class="card section-card mb-4">
+                <div class="card-header">
+                    <i class="fas fa-heartbeat text-primary me-2"></i>Vitals
+                </div>
+                <div class="card-body">
+                    <div class="row g-2">
+                        <div class="col-6">
+                            <div class="vital-card">
+                                <div class="vital-value">{{ triage.temperature|default:'-' }}°C</div>
+                                <div class="vital-label">Temperature</div>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="vital-card">
+                                <div class="vital-value">{{ triage.heart_rate|default:'-' }}</div>
+                                <div class="vital-label">Heart Rate (BPM)</div>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="vital-card">
+                                <div class="vital-value">{{ triage.blood_pressure_systolic|default:'-' }}/{{ triage.blood_pressure_diastolic|default:'-' }}</div>
+                                <div class="vital-label">Blood Pressure</div>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="vital-card">
+                                <div class="vital-value">{{ triage.oxygen_saturation|default:'-' }}%</div>
+                                <div class="vital-label">O2 Saturation</div>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="vital-card">
+                                <div class="vital-value">{{ triage.respiratory_rate|default:'-' }}</div>
+                                <div class="vital-label">Respiratory Rate</div>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="vital-card">
+                                <div class="vital-value">{{ triage.weight|default:'-' }}kg</div>
+                                <div class="vital-label">Weight</div>
+                            </div>
+                        </div>
+                    </div>
+                    {% if triage.chief_complaint %}
+                        <div class="mt-3">
+                            <label class="text-muted small">Chief Complaint</label>
+                            <p class="mb-0">{{ triage.chief_complaint }}</p>
+                        </div>
+                    {% endif %}
+                    <div class="mt-2">
+                        <label class="text-muted small">Priority</label>
+                        <span class="badge bg-{% if triage.priority == 'emergency' %}danger{% elif triage.priority == 'urgent' %}warning{% elif triage.priority == 'semi_urgent' %}info{% else %}secondary{% endif %} ms-1">
+                            {{ triage.get_priority_display }}
+                        </span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Patient Info -->
+            <div class="card section-card">
+                <div class="card-header">
+                    <i class="fas fa-info-circle text-primary me-2"></i>Patient Information
+                </div>
+                <div class="card-body">
+                    <div class="mb-2">
+                        <label class="text-muted small">Blood Type</label>
+                        <div>{{ patient.blood_type|default:'Not recorded' }}</div>
+                    </div>
+                    <div class="mb-2">
+                        <label class="text-muted small">Phone</label>
+                        <div>{{ patient.phone_number }}</div>
+                    </div>
+                    <div class="mb-2">
+                        <label class="text-muted small">Email</label>
+                        <div>{{ patient.email|default:'Not provided' }}</div>
+                    </div>
+                    <div class="mb-2">
+                        <label class="text-muted small">Insurance</label>
+                        <div>{{ patient.get_insurance_type_display }}</div>
+                    </div>
+                    {% if patient.is_admitted %}
+                        <div class="mt-2">
+                            <span class="badge bg-danger">
+                                <i class="fas fa-hospital-user me-1"></i>
+                                Admitted (Day {{ patient.days_of_stay }})
+                            </span>
+                            <div class="text-muted small mt-1">
+                                Room: {{ patient.room_number|default:'Not assigned' }}
+                            </div>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Medical Record & Actions -->
+        <div class="col-lg-8">
+            <!-- Medical Record -->
+            <div class="card section-card mb-4">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <span>
+                        <i class="fas fa-notes-medical text-primary me-2"></i>
+                        Medical Record
+                    </span>
+                    <span class="badge bg-{% if record and record.is_completed %}success{% elif record and record.is_locked %}warning{% elif record %}info{% else %}secondary{% endif %}">
+                        {% if record and record.is_completed %}
+                            ✅ Completed
+                        {% elif record and record.is_locked %}
+                            🔒 Locked
+                        {% elif record %}
+                            📝 In Progress
+                        {% else %}
+                            ❌ Not Started
+                        {% endif %}
+                    </span>
+                </div>
+                <div class="card-body">
+                    {% if record %}
+                        <div class="row">
+                            <div class="col-md-6">
+                                <label class="text-muted small">Symptoms</label>
+                                <p>{{ record.symptoms|default:'Not recorded' }}</p>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="text-muted small">Severity</label>
+                                <p>{{ record.symptom_severity }}/10</p>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-12">
+                                <label class="text-muted small">Diagnosis</label>
+                                <p>{{ record.diagnosis|default:'Not recorded' }}</p>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-12">
+                                <label class="text-muted small">Treatment Plan</label>
+                                <p>{{ record.treatment_plan|default:'Not recorded' }}</p>
+                            </div>
+                        </div>
+                        {% if record.ml_suggestion %}
+                            <div class="alert alert-info">
+                                <i class="fas fa-robot me-2"></i>
+                                <strong>ML Suggestion:</strong> {{ record.ml_suggestion }}
+                                {% if record.ml_confidence %}
+                                    <span class="badge bg-info ms-2">{{ record.ml_confidence }}% confidence</span>
+                                {% endif %}
+                            </div>
+                        {% endif %}
+                        
+                        <!-- Actions -->
+                        <div class="d-flex flex-wrap gap-2 mt-3">
+                            {% if not record.is_locked and not record.is_completed %}
+                                <a href="{% url 'doctors:create_record' visit.id %}" class="btn btn-outline-primary btn-sm">
+                                    <i class="fas fa-edit me-1"></i>Edit Record
+                                </a>
+                                <a href="{% url 'doctors:complete_record' record.id %}" class="btn btn-success btn-sm">
+                                    <i class="fas fa-check me-1"></i>Complete Record
+                                </a>
+                            {% endif %}
+                            {% if not record.is_locked %}
+                                <a href="{% url 'doctors:create_prescription' record.id %}" class="btn btn-success btn-sm">
+                                    <i class="fas fa-prescription me-1"></i>Prescribe
+                                </a>
+                                <a href="{% url 'doctors:order_lab' record.id %}" class="btn btn-info btn-sm">
+                                    <i class="fas fa-flask me-1"></i>Order Lab
+                                </a>
+                                <a href="{% url 'doctors:order_imaging' record.id %}" class="btn btn-warning btn-sm">
+                                    <i class="fas fa-x-ray me-1"></i>Order Imaging
+                                </a>
+                            {% endif %}
+                            {% if record.is_admitted and not record.is_locked %}
+                                <a href="{% url 'doctors:discharge' record.id %}" class="btn btn-danger btn-sm">
+                                    <i class="fas fa-door-open me-1"></i>Discharge
+                                </a>
+                            {% endif %}
+                            {% if record.is_locked %}
+                                <span class="badge bg-warning text-dark">
+                                    <i class="fas fa-lock me-1"></i> Locked: {{ record.lock_reason }}
+                                </span>
+                            {% endif %}
+                        </div>
+                    {% else %}
+                        <div class="text-center py-4">
+                            <i class="fas fa-notes-medical fa-3x text-muted mb-3"></i>
+                            <p class="text-muted">No medical record yet.</p>
+                            <a href="{% url 'doctors:create_record' visit.id %}" class="btn btn-primary">
+                                <i class="fas fa-plus me-1"></i>Create Medical Record
+                            </a>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Prescriptions -->
+            {% if record %}
+                <div class="card section-card">
+                    <div class="card-header">
+                        <i class="fas fa-prescription text-primary me-2"></i>
+                        Prescriptions
+                    </div>
+                    <div class="card-body p-0">
+                        {% with prescriptions=record.prescriptions.all %}
+                            {% if prescriptions %}
+                                <div class="list-group list-group-flush">
+                                    {% for prescription in prescriptions %}
+                                        <div class="list-group-item">
+                                            <div class="d-flex justify-content-between align-items-center">
+                                                <div>
+                                                    <strong>{{ prescription.medication_name }}</strong>
+                                                    <span class="text-muted ms-2">{{ prescription.dosage }}</span>
+                                                    <div class="text-muted small">
+                                                        {{ prescription.frequency }} - {{ prescription.duration }}
+                                                    </div>
+                                                </div>
+                                                <span class="badge bg-{% if prescription.status == 'dispensed' %}success{% elif prescription.status == 'pending' %}warning{% else %}secondary{% endif %}">
+                                                    {{ prescription.get_status_display }}
+                                                </span>
+                                            </div>
+                                        </div>
+                                    {% endfor %}
+                                </div>
+                            {% else %}
+                                <div class="text-center py-3">
+                                    <p class="text-muted mb-0">No prescriptions yet.</p>
+                                </div>
+                            {% endif %}
+                        {% endwith %}
+                    </div>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<script>
+function completeVisit(visitId) {
+    if (confirm('Mark this visit as completed and proceed to the next patient?')) {
+        window.location.href = `/doctor/patient/${visitId}/complete/`;
+    }
+}
+
+function cancelLabTests(recordId) {
+    if (confirm('Cancel all lab tests for this patient? This will return them to the queue.')) {
+        window.location.href = `/doctor/lab/${recordId}/cancel/`;
+    }
+}
+
+function cancelImaging(recordId) {
+    if (confirm('Cancel all imaging orders for this patient? This will return them to the queue.')) {
+        window.location.href = `/doctor/imaging/${recordId}/cancel/`;
+    }
+}
+</script>
+{% endblock %}

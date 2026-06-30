@@ -1,44 +1,302 @@
 {% extends 'base.html' %}
+{% load static %}
 
 {% block title %}Doctor Dashboard - TibaFlow HMS{% endblock %}
 
+{% block extra_css %}
+<style>
+    .stat-card {
+        background: white;
+        border-radius: 12px;
+        padding: 1.5rem;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        transition: all 0.3s ease;
+        border-left: 4px solid #0d6efd;
+        height: 100%;
+    }
+    .stat-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+    }
+    .stat-card .stat-icon {
+        font-size: 2rem;
+        opacity: 0.3;
+    }
+    .stat-card .stat-number {
+        font-size: 2rem;
+        font-weight: 700;
+    }
+    .stat-card.pending { border-left-color: #ffc107; }
+    .stat-card.assigned { border-left-color: #0d6efd; }
+    .stat-card.today { border-left-color: #198754; }
+    .stat-card.lab { border-left-color: #6f42c1; }
+    
+    .patient-queue-item {
+        transition: all 0.3s ease;
+        cursor: pointer;
+    }
+    .patient-queue-item:hover {
+        background: #f8f9fa;
+        transform: translateX(5px);
+    }
+    .priority-badge {
+        font-size: 0.7rem;
+        padding: 0.25rem 0.75rem;
+    }
+    .quick-action-btn {
+        transition: all 0.3s ease;
+    }
+    .quick-action-btn:hover {
+        transform: scale(1.05);
+    }
+    .waiting-indicator {
+        animation: pulse 2s infinite;
+    }
+    @keyframes pulse {
+        0% { opacity: 1; }
+        50% { opacity: 0.5; }
+        100% { opacity: 1; }
+    }
+    .empty-state {
+        padding: 3rem 1rem;
+        text-align: center;
+    }
+    .empty-state i {
+        font-size: 4rem;
+        color: #dee2e6;
+        margin-bottom: 1rem;
+    }
+</style>
+{% endblock %}
+
 {% block content %}
-<section class="dashboard-page">
-    <div class="dashboard-hero">
+<div class="container-fluid">
+    <!-- Page Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
         <div>
-            <p class="eyebrow">Welcome back,</p>
-            <h1>Dr. {% if user.full_name %}{{ user.full_name }}{% else %}{{ user.username }}{% endif %}</h1>
-            <p>Manage consultations, orders, and prescriptions from one clinical workspace.</p>
+            <h1 class="h2 mb-1">
+                <i class="fas fa-user-doctor text-primary me-2"></i>Doctor Dashboard
+            </h1>
+            <p class="text-muted">Welcome back, Dr. {{ doctor.get_full_name|default:doctor.username }}</p>
         </div>
-        <span class="date-pill"><i class="far fa-calendar-check"></i>{% now "F j, Y" %}</span>
+        <div>
+            <button class="btn btn-primary" onclick="getNextPatient()">
+                <i class="fas fa-forward me-2"></i>Next Patient
+            </button>
+            <a href="{% url 'doctors:queue' %}" class="btn btn-outline-primary">
+                <i class="fas fa-list me-2"></i>View Queue
+            </a>
+        </div>
     </div>
 
-    <div class="stats-grid">
-        <article class="stat-card"><span class="stat-icon tone-blue"><i class="fas fa-user-injured"></i></span><div><p class="stat-label">Assigned Patients</p><p class="stat-value">24</p><p class="stat-change">6 waiting review</p></div><span class="sparkline"></span></article>
-        <article class="stat-card"><span class="stat-icon tone-green"><i class="fas fa-prescription-bottle-medical"></i></span><div><p class="stat-label">Prescriptions</p><p class="stat-value">18</p><p class="stat-change">+4 today</p></div><span class="sparkline"></span></article>
-        <article class="stat-card"><span class="stat-icon tone-purple"><i class="fas fa-flask-vial"></i></span><div><p class="stat-label">Lab Orders</p><p class="stat-value">11</p><p class="stat-change">3 urgent</p></div><span class="sparkline"></span></article>
-        <article class="stat-card"><span class="stat-icon tone-amber"><i class="far fa-clock"></i></span><div><p class="stat-label">Avg. Wait</p><p class="stat-value">14m</p><p class="stat-change">-8% this week</p></div><span class="sparkline"></span></article>
+    <!-- Stats Cards -->
+    <div class="row g-4 mb-4">
+        <div class="col-md-3 col-sm-6">
+            <div class="stat-card pending">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                        <div class="stat-number">{{ waiting_count }}</div>
+                        <div class="text-muted">Patients Waiting</div>
+                        {% if waiting_count > 0 %}
+                            <span class="badge bg-warning waiting-indicator">
+                                <i class="fas fa-circle text-danger me-1" style="font-size: 0.5rem;"></i>
+                                Waiting
+                            </span>
+                        {% endif %}
+                    </div>
+                    <div class="stat-icon">
+                        <i class="fas fa-clock"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 col-sm-6">
+            <div class="stat-card assigned">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                        <div class="stat-number">{{ assigned_count }}</div>
+                        <div class="text-muted">My Patients</div>
+                    </div>
+                    <div class="stat-icon">
+                        <i class="fas fa-users"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 col-sm-6">
+            <div class="stat-card today">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                        <div class="stat-number">{{ today_count }}</div>
+                        <div class="text-muted">Today's Patients</div>
+                    </div>
+                    <div class="stat-icon">
+                        <i class="fas fa-calendar-day"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 col-sm-6">
+            <div class="stat-card lab">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                        <div class="stat-number">{{ pending_lab_orders|add:pending_imaging_orders }}</div>
+                        <div class="text-muted">Pending Tests</div>
+                    </div>
+                    <div class="stat-icon">
+                        <i class="fas fa-flask"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 
-    <div class="role-grid">
-        <article class="role-card">
-            <span class="stat-icon tone-blue"><i class="fas fa-user-injured"></i></span>
-            <h2>My Patients</h2>
-            <p>View assigned patients, notes, current diagnoses, and triage priority.</p>
-            <a href="#" class="btn btn-primary">View Patients</a>
-        </article>
-        <article class="role-card">
-            <span class="stat-icon tone-green"><i class="fas fa-file-prescription"></i></span>
-            <h2>Prescriptions</h2>
-            <p>Create new medication orders and send them directly to pharmacy.</p>
-            <a href="#" class="btn btn-success">Write Prescription</a>
-        </article>
-        <article class="role-card">
-            <span class="stat-icon tone-purple"><i class="fas fa-vials"></i></span>
-            <h2>Lab Tests</h2>
-            <p>Order investigations and track pending or completed lab results.</p>
-            <a href="#" class="btn btn-primary">Order Test</a>
-        </article>
+    <!-- Patient Queue & Recent Activity -->
+    <div class="row g-4">
+        <!-- Patient Queue -->
+        <div class="col-lg-7">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-users me-2"></i>Patient Queue
+                        {% if waiting_count > 0 %}
+                            <span class="badge bg-primary ms-2">{{ waiting_count }} waiting</span>
+                        {% endif %}
+                    </h5>
+                    <a href="{% url 'doctors:queue' %}" class="btn btn-sm btn-link">View All</a>
+                </div>
+                <div class="card-body p-0">
+                    {% if waiting_patients %}
+                        <div class="list-group list-group-flush">
+                            {% for visit in waiting_patients %}
+                                <a href="{% url 'doctors:view_patient' visit.id %}" 
+                                   class="list-group-item list-group-item-action patient-queue-item">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <div>
+                                            <strong>{{ visit.patient.full_name }}</strong>
+                                            <span class="badge bg-secondary ms-2">{{ visit.visit_number }}</span>
+                                            <div class="text-muted small">
+                                                <i class="fas fa-clock me-1"></i>
+                                                Waiting since {{ visit.arrival_time|timesince }}
+                                            </div>
+                                        </div>
+                                        <div class="d-flex align-items-center gap-2">
+                                            {% if visit.triage.priority == 'emergency' %}
+                                                <span class="badge bg-danger priority-badge">
+                                                    <i class="fas fa-exclamation-triangle me-1"></i>Emergency
+                                                </span>
+                                            {% elif visit.triage.priority == 'urgent' %}
+                                                <span class="badge bg-warning priority-badge">Urgent</span>
+                                            {% elif visit.triage.priority == 'semi_urgent' %}
+                                                <span class="badge bg-info priority-badge">Semi-Urgent</span>
+                                            {% else %}
+                                                <span class="badge bg-secondary priority-badge">Routine</span>
+                                            {% endif %}
+                                            <i class="fas fa-chevron-right text-muted"></i>
+                                        </div>
+                                    </div>
+                                </a>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <div class="empty-state">
+                            <i class="fas fa-user-check"></i>
+                            <h5 class="text-muted">No Patients Waiting</h5>
+                            <p class="text-muted small">All caught up! Take a break or review patient records.</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Recent Activity -->
+        <div class="col-lg-5">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-clock me-2"></i>Recent Activity
+                    </h5>
+                </div>
+                <div class="card-body p-0">
+                    <div class="list-group list-group-flush">
+                        {% if my_records %}
+                            {% for record in my_records %}
+                                <div class="list-group-item">
+                                    <div class="d-flex justify-content-between align-items-start">
+                                        <div>
+                                            <strong>{{ record.patient.full_name }}</strong>
+                                            <div class="text-muted small">
+                                                <i class="fas fa-stethoscope me-1"></i>
+                                                {{ record.diagnosis|truncatechars:50 }}
+                                            </div>
+                                        </div>
+                                        <span class="badge bg-{% if record.is_completed %}success{% else %}warning{% endif %}">
+                                            {% if record.is_completed %}Completed{% else %}In Progress{% endif %}
+                                        </span>
+                                    </div>
+                                    <small class="text-muted">
+                                        <i class="far fa-clock me-1"></i>
+                                        {{ record.created_at|timesince }} ago
+                                    </small>
+                                </div>
+                            {% endfor %}
+                        {% else %}
+                            <div class="empty-state">
+                                <i class="fas fa-notes-medical"></i>
+                                <h5 class="text-muted">No Recent Records</h5>
+                                <p class="text-muted small">Your recent patient records will appear here.</p>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Quick Actions -->
+            <div class="card mt-4">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-bolt me-2"></i>Quick Actions
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row g-2">
+                        <div class="col-6">
+                            <button class="btn btn-primary w-100 quick-action-btn" onclick="getNextPatient()">
+                                <i class="fas fa-forward me-1"></i> Next Patient
+                            </button>
+                        </div>
+                        <div class="col-6">
+                            <a href="{% url 'doctors:queue' %}" class="btn btn-outline-primary w-100 quick-action-btn">
+                                <i class="fas fa-list me-1"></i> View Queue
+                            </a>
+                        </div>
+                        <div class="col-12 mt-2">
+                            <a href="#" class="btn btn-success w-100 quick-action-btn">
+                                <i class="fas fa-prescription me-1"></i> New Prescription
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
-</section>
+</div>
+
+<script>
+function getNextPatient() {
+    fetch("{% url 'doctors:next_patient' %}")
+        .then(response => response.json())
+        .then(data => {
+            if (data.visit_id) {
+                window.location.href = `/doctor/patient/${data.visit_id}/`;
+            } else {
+                alert('No patients waiting in queue.');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Error fetching next patient.');
+        });
+}
+</script>
 {% endblock %}
