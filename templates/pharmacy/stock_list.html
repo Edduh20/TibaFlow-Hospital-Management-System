@@ -1,0 +1,76 @@
+{% extends 'base.html' %}
+
+{% block title %}Medicine Stock - Pharmacy{% endblock %}
+
+{% block content %}
+<section class="dashboard-page">
+    <div class="dashboard-hero">
+        <div>
+            <p class="eyebrow">Inventory</p>
+            <h1>Medicine Stock</h1>
+            <p>Track quantities, expiry dates, and reorder levels.</p>
+        </div>
+        <div class="hero-actions">
+            <a href="?low_stock=1" class="btn btn-outline-warning">Low Stock</a>
+            <a href="{% url 'pharmacy:stock_add' %}" class="btn btn-primary">Add Medicine</a>
+        </div>
+    </div>
+
+    <section class="panel">
+        {% if medicines %}
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead>
+                    <tr>
+                        <th>Name</th>
+                        <th>Generic</th>
+                        <th>Quantity</th>
+                        <th>Unit</th>
+                        <th>Reorder At</th>
+                        <th>Expiry</th>
+                        <th>Status</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for med in medicines %}
+                    <tr>
+                        <td><strong>{{ med.name }}</strong></td>
+                        <td>{{ med.generic_name|default:"—" }}</td>
+                        <td>
+                            {% if med.is_low_stock %}
+                            <span class="text-danger fw-semibold">{{ med.quantity }}</span>
+                            {% else %}
+                            {{ med.quantity }}
+                            {% endif %}
+                        </td>
+                        <td>{{ med.get_unit_display }}</td>
+                        <td>{{ med.reorder_level }}</td>
+                        <td>{{ med.expiry_date|date:"M j, Y"|default:"—" }}</td>
+                        <td>
+                            {% if not med.is_active %}
+                            <span class="status-pill status-muted">Inactive</span>
+                            {% elif med.is_low_stock %}
+                            <span class="status-pill status-wait">Low</span>
+                            {% else %}
+                            <span class="status-pill status-good">OK</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <a href="{% url 'pharmacy:stock_edit' med.pk %}" class="btn btn-sm btn-outline-primary">Edit</a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="empty-state">
+            <i class="fas fa-boxes-stacked"></i>
+            <p>No medicines in stock yet.</p>
+            <a href="{% url 'pharmacy:stock_add' %}" class="btn btn-primary">Add first medicine</a>
+        </div>
+        {% endif %}
+    </section>
+</section>
+{% endblock %}

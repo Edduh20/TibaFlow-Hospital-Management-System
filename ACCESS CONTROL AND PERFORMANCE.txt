@@ -1,0 +1,44 @@
+--Hospital Management System with ML for prescription--
+>>ADMIN
+  -can access everything although some might be encrypted
+  -can add doctors Nurses Technician e.t.c
+  -
+
+>>RECEPTION
+ -Take patients details
+ -Verify payments(how e.g insurance)
+ -Help patients with referrals
+ -Sends Patients to triage
+
+N/B: see all patients info definitely
+>>TRIAGE
+ - takes patients vitals
+ - send to doctor
+ -receives for doctor for nursing care e.g injection
+
+N/B:cant see all patient info only age & name, visit type and number
+>>DOCTOR
+ -Takes patients symptoms
+ -ML assist to diagnose
+ -can refer to lab/MRI/XRAY/
+ -Gives Prescription
+ -diagnosed sent to pharmacy or triage
+ -day of stay for inpatient
+
+N/B:sees all info apart from mode of payment
+>>PHARMACY
+ -Gives prescripted medicine 
+ -send to pharmarcy for payment
+
+N/B: sees patient name and prescription
+>>LAB/XRAY/CT E.T.C
+ -perform specified tests
+ -sends  feedback to doctor
+
+N/B:sees name age & adviced test 
+>>NURSE
+ -day of stay(automatic counted)
+ -patient prescription
+ -feedback to doctor when needed
+
+N/B:sees only patient name age and prescription,day of stay 

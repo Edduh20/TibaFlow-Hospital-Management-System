@@ -1,0 +1,120 @@
+{% extends 'base.html' %}
+
+{% block title %}Pharmacy Dashboard - TibaFlow HMS{% endblock %}
+
+{% block content %}
+<section class="dashboard-page">
+    <div class="dashboard-hero">
+        <div>
+            <p class="eyebrow">Pharmacy counter</p>
+            <h1>{{ user.full_name }}</h1>
+            <p>Dispense prescriptions, manage stock, and keep orders moving.</p>
+        </div>
+        <span class="date-pill"><i class="far fa-calendar-check"></i>{% now "F j, Y" %}</span>
+    </div>
+
+    <div class="stats-grid">
+        <article class="stat-card">
+            <span class="stat-icon tone-blue"><i class="fas fa-file-prescription"></i></span>
+            <div>
+                <p class="stat-label">Pending Prescriptions</p>
+                <p class="stat-value">{{ stats.pending_count }}</p>
+                <p class="stat-change">{{ stats.urgent_count }} urgent</p>
+            </div>
+        </article>
+        <article class="stat-card">
+            <span class="stat-icon tone-green"><i class="fas fa-pills"></i></span>
+            <div>
+                <p class="stat-label">Dispensed Today</p>
+                <p class="stat-value">{{ stats.dispensed_today }}</p>
+                <p class="stat-change">Completed today</p>
+            </div>
+        </article>
+        <article class="stat-card">
+            <span class="stat-icon tone-amber"><i class="fas fa-box-open"></i></span>
+            <div>
+                <p class="stat-label">Low Stock</p>
+                <p class="stat-value">{{ stats.low_stock_count }}</p>
+                <p class="stat-change">Needs reorder</p>
+            </div>
+        </article>
+        <article class="stat-card">
+            <span class="stat-icon tone-purple"><i class="fas fa-receipt"></i></span>
+            <div>
+                <p class="stat-label">Awaiting Payment</p>
+                <p class="stat-value">{{ stats.awaiting_payment }}</p>
+                <p class="stat-change">Sent to counter</p>
+            </div>
+        </article>
+    </div>
+
+    <div class="role-grid">
+        <article class="role-card">
+            <span class="stat-icon tone-blue"><i class="fas fa-file-prescription"></i></span>
+            <h2>Pending Prescriptions</h2>
+            <p>Review prescriptions waiting to be prepared and dispensed.</p>
+            <a href="{% url 'pharmacy:prescription_list' %}?status=pending" class="btn btn-primary">View</a>
+        </article>
+        <article class="role-card">
+            <span class="stat-icon tone-green"><i class="fas fa-capsules"></i></span>
+            <h2>Dispense Medicine</h2>
+            <p>Record dispensed medication and update prescription status.</p>
+            <a href="{% url 'pharmacy:prescription_list' %}" class="btn btn-success">Dispense</a>
+        </article>
+        <article class="role-card">
+            <span class="stat-icon tone-amber"><i class="fas fa-boxes-stacked"></i></span>
+            <h2>Stock Review</h2>
+            <p>Check stock levels, expiries, and reorder requirements.</p>
+            <a href="{% url 'pharmacy:stock_list' %}?low_stock=1" class="btn btn-warning">Review Stock</a>
+        </article>
+    </div>
+
+    {% if recent_prescriptions or low_stock %}
+    <div class="dashboard-grid-bottom">
+        {% if recent_prescriptions %}
+        <section class="panel">
+            <div class="panel-header">
+                <h2 class="panel-title">Pending Queue</h2>
+                <a class="view-link" href="{% url 'pharmacy:prescription_list' %}">View All</a>
+            </div>
+            <div class="appointment-list">
+                {% for rx in recent_prescriptions %}
+                <a class="appointment-row text-decoration-none text-reset" href="{% url 'pharmacy:prescription_detail' rx.pk %}">
+                    <span class="patient-avatar">{{ rx.patient_name|first|upper }}</span>
+                    <div>
+                        <p class="row-title">{{ rx.patient_name }}</p>
+                        <p class="row-sub">{{ rx.items.count }} item{{ rx.items.count|pluralize }}</p>
+                    </div>
+                    <span class="status-pill {% if rx.priority == 'urgent' %}status-wait{% else %}status-good{% endif %}">
+                        {{ rx.get_priority_display }}
+                    </span>
+                </a>
+                {% endfor %}
+            </div>
+        </section>
+        {% endif %}
+
+        {% if low_stock %}
+        <section class="panel">
+            <div class="panel-header">
+                <h2 class="panel-title">Low Stock Alerts</h2>
+                <a class="view-link" href="{% url 'pharmacy:stock_list' %}?low_stock=1">View All</a>
+            </div>
+            <div class="appointment-list">
+                {% for med in low_stock %}
+                <div class="appointment-row">
+                    <span class="stat-icon tone-amber"><i class="fas fa-pills"></i></span>
+                    <div>
+                        <p class="row-title">{{ med.name }}</p>
+                        <p class="row-sub">{{ med.quantity }} {{ med.get_unit_display }} left</p>
+                    </div>
+                    <a href="{% url 'pharmacy:stock_edit' med.pk %}" class="btn btn-sm btn-outline-primary">Restock</a>
+                </div>
+                {% endfor %}
+            </div>
+        </section>
+        {% endif %}
+    </div>
+    {% endif %}
+</section>
+{% endblock %}
