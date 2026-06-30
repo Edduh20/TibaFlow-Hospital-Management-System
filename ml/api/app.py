@@ -1,10 +1,3 @@
-"""
-FastAPI App
------------
-Two route groups:
-  /predict  — Classic ML model inference
-  /rag      — RAG question answering
-"""
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 from src.prediction.predict import predict
