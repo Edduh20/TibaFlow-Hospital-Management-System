@@ -56,7 +56,8 @@
                     </ul>
                 </div>
             {% else %}
-                <a class="btn btn-light btn-lg" href="{% url 'accounts:login' %}">Login</a>
+                <a class="btn btn-light btn-sm" href="{% url 'accounts:login' %}">Login</a>
+                <a class="btn btn-outline-light btn-sm" href="{% url 'accounts:register' %}">Register</a>
             {% endif %}
         </div>
     </header>

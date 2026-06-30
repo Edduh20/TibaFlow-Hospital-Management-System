@@ -19,7 +19,8 @@ db.sqlite3
 db.sqlite3-journal
 media/
 staticfiles/
-static/
+
+# Django source static (keep tracked); collected files go to staticfiles/
 
 # Database
 *.db
@@ -98,5 +99,3 @@ pharmacy/__pycache__/
 laboratory/__pycache__/
 nurses/__pycache__/
 api/__pycache__/
-*/migrations/
-!*/migrations/__init__.py

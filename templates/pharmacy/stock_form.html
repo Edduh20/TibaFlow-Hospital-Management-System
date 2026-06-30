@@ -1,0 +1,39 @@
+{% extends 'base.html' %}
+{% load crispy_forms_tags %}
+
+{% block title %}{{ title }} - Pharmacy{% endblock %}
+
+{% block content %}
+<section class="dashboard-page">
+    <div class="dashboard-hero">
+        <div>
+            <p class="eyebrow">Stock management</p>
+            <h1>{{ title }}</h1>
+        </div>
+        <a href="{% url 'pharmacy:stock_list' %}" class="btn btn-outline-secondary">Back to stock</a>
+    </div>
+
+    <section class="panel form-panel">
+        <form method="post">
+            {% csrf_token %}
+            <div class="row g-3">
+                <div class="col-md-6">{{ form.name.label_tag }}{{ form.name }}</div>
+                <div class="col-md-6">{{ form.generic_name.label_tag }}{{ form.generic_name }}</div>
+                <div class="col-md-4">{{ form.quantity.label_tag }}{{ form.quantity }}</div>
+                <div class="col-md-4">{{ form.unit.label_tag }}{{ form.unit }}</div>
+                <div class="col-md-4">{{ form.reorder_level.label_tag }}{{ form.reorder_level }}</div>
+                <div class="col-md-6">{{ form.expiry_date.label_tag }}{{ form.expiry_date }}</div>
+                <div class="col-md-6 d-flex align-items-end">
+                    <div class="form-check">
+                        {{ form.is_active }}
+                        <label class="form-check-label" for="{{ form.is_active.id_for_label }}">Active</label>
+                    </div>
+                </div>
+            </div>
+            <div class="mt-4">
+                <button type="submit" class="btn btn-primary">Save</button>
+            </div>
+        </form>
+    </section>
+</section>
+{% endblock %}

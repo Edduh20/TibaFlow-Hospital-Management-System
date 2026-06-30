@@ -1,4 +1,4 @@
-from django.shortcuts import render
+from django.shortcuts import redirect, render
 from django.contrib.auth.decorators import login_required
 
 def home(request):
@@ -21,7 +21,7 @@ def dashboard(request):
     elif user.role == 'doctor':
         return render(request, 'doctors/dashboard.html', context)
     elif user.role == 'pharmacy':
-        return render(request, 'pharmacy/dashboard.html', context)
+        return redirect('pharmacy:dashboard')
     elif user.role == 'lab':
         return render(request, 'laboratory/dashboard.html', context)
     elif user.role == 'nurse':

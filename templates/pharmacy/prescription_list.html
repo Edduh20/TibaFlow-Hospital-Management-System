@@ -1,0 +1,67 @@
+{% extends 'base.html' %}
+
+{% block title %}Prescriptions - Pharmacy{% endblock %}
+
+{% block content %}
+<section class="dashboard-page">
+    <div class="dashboard-hero">
+        <div>
+            <p class="eyebrow">Pharmacy</p>
+            <h1>Prescriptions</h1>
+            <p>Patient name and prescription details only — per pharmacy access policy.</p>
+        </div>
+        <div class="filter-pills">
+            <a href="?status=pending" class="select-pill{% if current_status == 'pending' %} active{% endif %}">Pending</a>
+            <a href="?status=awaiting_payment" class="select-pill{% if current_status == 'awaiting_payment' %} active{% endif %}">Awaiting Payment</a>
+            <a href="?status=dispensed" class="select-pill{% if current_status == 'dispensed' %} active{% endif %}">Dispensed</a>
+            <a href="?status=all" class="select-pill{% if current_status == 'all' %} active{% endif %}">All</a>
+        </div>
+    </div>
+
+    <section class="panel">
+        {% if prescriptions %}
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead>
+                    <tr>
+                        <th>Patient</th>
+                        <th>Age</th>
+                        <th>Items</th>
+                        <th>Priority</th>
+                        <th>Status</th>
+                        <th>Received</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for rx in prescriptions %}
+                    <tr>
+                        <td><strong>{{ rx.patient_name }}</strong></td>
+                        <td>{{ rx.patient_age|default:"—" }}</td>
+                        <td>{{ rx.items.count }}</td>
+                        <td>
+                            <span class="status-pill {% if rx.priority == 'urgent' %}status-wait{% else %}status-good{% endif %}">
+                                {{ rx.get_priority_display }}
+                            </span>
+                        </td>
+                        <td>{{ rx.get_status_display }}</td>
+                        <td>{{ rx.created_at|date:"M j, Y g:i A" }}</td>
+                        <td>
+                            <a href="{% url 'pharmacy:prescription_detail' rx.pk %}" class="btn btn-sm btn-primary">
+                                {% if rx.status == 'pending' %}Dispense{% else %}View{% endif %}
+                            </a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="empty-state">
+            <i class="fas fa-file-prescription"></i>
+            <p>No prescriptions found for this filter.</p>
+        </div>
+        {% endif %}
+    </section>
+</section>
+{% endblock %}

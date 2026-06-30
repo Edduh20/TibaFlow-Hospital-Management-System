@@ -25,11 +25,32 @@ class User(AbstractUser):
     
     def __str__(self):
         return f"{self.username} - {self.get_role_display()}"
+
+    @property
+    def full_name(self):
+        name = f"{self.first_name} {self.last_name}".strip()
+        return name or self.username
     
     def has_permission(self, permission_name):
         if self.role == 'admin':
             return True
         return self.user_permissions.filter(codename=permission_name).exists()
+
+    def can_access_app(self, app_name):
+        from .permissions import role_can_access_app
+        return role_can_access_app(self.role, app_name)
+
+    def can_access_path(self, path):
+        from .permissions import role_can_access_path
+        return role_can_access_path(self.role, path)
+
+    def allowed_patient_fields(self):
+        from .permissions import allowed_fields_for_role
+        return allowed_fields_for_role(self.role)
+
+    def filter_patient_data(self, data):
+        from .permissions import filter_patient_fields
+        return filter_patient_fields(self.role, data)
     
     class Meta:
         db_table = 'users'

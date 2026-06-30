@@ -1,0 +1,92 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ prescription.patient_name }} - Prescription{% endblock %}
+
+{% block content %}
+<section class="dashboard-page">
+    <div class="dashboard-hero">
+        <div>
+            <p class="eyebrow">Prescription detail</p>
+            <h1>{{ prescription.patient_name }}</h1>
+            <p>Age: {{ prescription.patient_age|default:"Not recorded" }} · Status: {{ prescription.get_status_display }}</p>
+        </div>
+        <a href="{% url 'pharmacy:prescription_list' %}" class="btn btn-outline-secondary">Back to list</a>
+    </div>
+
+    <section class="panel">
+        <div class="panel-header">
+            <h2 class="panel-title">Prescribed Items</h2>
+            {% if prescription.priority == 'urgent' %}
+            <span class="status-pill status-wait">Urgent</span>
+            {% endif %}
+        </div>
+        <div class="table-responsive">
+            <table class="table align-middle mb-0">
+                <thead>
+                    <tr>
+                        <th>Medicine</th>
+                        <th>Dosage</th>
+                        <th>Frequency</th>
+                        <th>Duration</th>
+                        <th>Qty</th>
+                        <th>Stock</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in prescription.items.all %}
+                    <tr>
+                        <td><strong>{{ item.medicine_name }}</strong></td>
+                        <td>{{ item.dosage }}</td>
+                        <td>{{ item.frequency }}</td>
+                        <td>{{ item.duration|default:"—" }}</td>
+                        <td>{{ item.quantity }}</td>
+                        <td>
+                            {% if item.medicine %}
+                                {% if item.medicine.quantity < item.quantity %}
+                                <span class="text-danger">{{ item.medicine.quantity }} (low)</span>
+                                {% else %}
+                                <span class="text-success">{{ item.medicine.quantity }}</span>
+                                {% endif %}
+                            {% else %}
+                                —
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </section>
+
+    {% if prescription.status == 'pending' %}
+    <section class="panel mt-3">
+        <div class="panel-header">
+            <h2 class="panel-title">Dispense</h2>
+        </div>
+        <form method="post" class="form-panel">
+            {% csrf_token %}
+            <div class="mb-3 form-check">
+                {{ form.send_to_payment }}
+                <label class="form-check-label" for="{{ form.send_to_payment.id_for_label }}">
+                    {{ form.send_to_payment.label }}
+                </label>
+            </div>
+            <div class="mb-3">
+                <label class="form-label" for="{{ form.notes.id_for_label }}">Notes (optional)</label>
+                {{ form.notes }}
+            </div>
+            <button type="submit" class="btn btn-success">
+                <i class="fas fa-capsules me-1"></i> Confirm Dispense
+            </button>
+        </form>
+    </section>
+    {% elif prescription.dispensed_at %}
+    <section class="panel mt-3">
+        <p class="mb-1"><strong>Dispensed:</strong> {{ prescription.dispensed_at|date:"M j, Y g:i A" }}</p>
+        {% if prescription.dispensed_by %}
+        <p class="mb-0"><strong>By:</strong> {{ prescription.dispensed_by.full_name }}</p>
+        {% endif %}
+    </section>
+    {% endif %}
+</section>
+{% endblock %}
