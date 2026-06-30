@@ -37,12 +37,13 @@ def predict(symptoms: str) -> dict:
 
     medications = ast.literal_eval(medications)
     diets = ast.literal_eval(diets)
+    precautions = [p for p in precautions if pd.notna(p)]
 
     return {
         "disease": disease,
         "description": description,
         "severity_score": int(severity_score),
-        "precautions": precautions.tolist(),
+        "precautions": precautions,
         "medications": medications,
         "diets": diets,
         "workouts": workouts
