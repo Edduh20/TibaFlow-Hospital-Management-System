@@ -30,6 +30,15 @@ class User(AbstractUser):
     def full_name(self):
         name = f"{self.first_name} {self.last_name}".strip()
         return name or self.username
+
+    @property
+    def display_name(self):
+        name = self.full_name
+        if self.role == 'doctor':
+            if name.lower().startswith('dr'):
+                return name
+            return f'Dr. {name}'
+        return name
     
     def has_permission(self, permission_name):
         if self.role == 'admin':

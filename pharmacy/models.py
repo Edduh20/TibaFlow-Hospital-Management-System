@@ -1,9 +1,16 @@
+from datetime import timedelta
+
 from django.conf import settings
 from django.db import models
 from django.utils import timezone
 
 
 class Medicine(models.Model):
+    CATEGORY_CHOICES = (
+        ('medicine', 'Medicine'),
+        ('supply', 'Medical Supply'),
+        ('equipment', 'Equipment'),
+    )
     UNIT_CHOICES = (
         ('tablets', 'Tablets'),
         ('capsules', 'Capsules'),
@@ -15,9 +22,12 @@ class Medicine(models.Model):
 
     name = models.CharField(max_length=200)
     generic_name = models.CharField(max_length=200, blank=True)
+    category = models.CharField(max_length=20, choices=CATEGORY_CHOICES, default='medicine')
     quantity = models.PositiveIntegerField(default=0)
     unit = models.CharField(max_length=20, choices=UNIT_CHOICES, default='tablets')
     reorder_level = models.PositiveIntegerField(default=10)
+    storage_location = models.CharField(max_length=100, blank=True)
+    supplier = models.CharField(max_length=150, blank=True)
     expiry_date = models.DateField(null=True, blank=True)
     is_active = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)
@@ -32,6 +42,15 @@ class Medicine(models.Model):
     @property
     def is_low_stock(self):
         return self.quantity <= self.reorder_level
+
+    @property
+    def is_out_of_stock(self):
+        return self.quantity == 0
+
+    def is_expiring_soon(self, within_days=30):
+        if not self.expiry_date:
+            return False
+        return self.expiry_date <= timezone.localdate() + timedelta(days=within_days)
 
 
 class Prescription(models.Model):

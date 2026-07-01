@@ -7,7 +7,7 @@
     <div class="dashboard-hero">
         <div>
             <p class="eyebrow">Welcome back,</p>
-            <h1>Dr. {% if user.full_name %}{{ user.full_name }}{% else %}{{ user.username }}{% endif %}</h1>
+            <h1>{{ user.display_name }}</h1>
             <p>Manage consultations, orders, and prescriptions from one clinical workspace.</p>
         </div>
         <span class="date-pill"><i class="far fa-calendar-check"></i>{% now "F j, Y" %}</span>
