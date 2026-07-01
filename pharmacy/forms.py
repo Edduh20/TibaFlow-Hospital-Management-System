@@ -7,15 +7,19 @@ class MedicineForm(forms.ModelForm):
     class Meta:
         model = Medicine
         fields = (
-            'name', 'generic_name', 'quantity', 'unit',
-            'reorder_level', 'expiry_date', 'is_active',
+            'name', 'generic_name', 'category', 'quantity', 'unit',
+            'reorder_level', 'storage_location', 'supplier',
+            'expiry_date', 'is_active',
         )
         widgets = {
             'name': forms.TextInput(attrs={'class': 'form-control'}),
             'generic_name': forms.TextInput(attrs={'class': 'form-control'}),
+            'category': forms.Select(attrs={'class': 'form-select'}),
             'quantity': forms.NumberInput(attrs={'class': 'form-control', 'min': 0}),
             'unit': forms.Select(attrs={'class': 'form-select'}),
             'reorder_level': forms.NumberInput(attrs={'class': 'form-control', 'min': 0}),
+            'storage_location': forms.TextInput(attrs={'class': 'form-control'}),
+            'supplier': forms.TextInput(attrs={'class': 'form-control'}),
             'expiry_date': forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}),
             'is_active': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
         }

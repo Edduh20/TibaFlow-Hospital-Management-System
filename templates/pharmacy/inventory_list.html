@@ -1,0 +1,93 @@
+{% extends 'base.html' %}
+
+{% block title %}Inventory Items - TibaFlow HMS{% endblock %}
+
+{% block content %}
+<section class="dashboard-page">
+    <div class="dashboard-hero">
+        <div>
+            <p class="eyebrow">Inventory</p>
+            <h1>All Items</h1>
+            <p>Medicines, medical supplies, and equipment in one place.</p>
+        </div>
+        <div class="hero-actions">
+            <a href="{% url 'pharmacy:inventory_dashboard' %}" class="btn btn-outline-secondary">Back</a>
+            <a href="{% url 'pharmacy:stock_add' %}?from=inventory" class="btn btn-primary">Add Item</a>
+        </div>
+    </div>
+
+    <div class="filter-pills mb-3">
+        <a href="?category=all" class="select-pill{% if current_category == 'all' %} active{% endif %}">All</a>
+        {% for value, label in categories %}
+        <a href="?category={{ value }}" class="select-pill{% if current_category == value %} active{% endif %}">{{ label }}</a>
+        {% endfor %}
+        <a href="?low_stock=1" class="select-pill{% if low_stock_only %} active{% endif %}">Low Stock</a>
+    </div>
+
+    <section class="panel">
+        {% if items %}
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead>
+                    <tr>
+                        <th>Name</th>
+                        <th>Category</th>
+                        <th>Quantity</th>
+                        <th>Unit</th>
+                        <th>Location</th>
+                        <th>Supplier</th>
+                        <th>Expiry</th>
+                        <th>Status</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in items %}
+                    <tr>
+                        <td>
+                            <strong>{{ item.name }}</strong>
+                            {% if item.generic_name %}<br><small class="text-muted">{{ item.generic_name }}</small>{% endif %}
+                        </td>
+                        <td>{{ item.get_category_display }}</td>
+                        <td>
+                            {% if item.is_out_of_stock %}
+                            <span class="text-danger fw-semibold">0</span>
+                            {% elif item.is_low_stock %}
+                            <span class="text-danger fw-semibold">{{ item.quantity }}</span>
+                            {% else %}
+                            {{ item.quantity }}
+                            {% endif %}
+                        </td>
+                        <td>{{ item.get_unit_display }}</td>
+                        <td>{{ item.storage_location|default:"—" }}</td>
+                        <td>{{ item.supplier|default:"—" }}</td>
+                        <td>{{ item.expiry_date|date:"M j, Y"|default:"—" }}</td>
+                        <td>
+                            {% if not item.is_active %}
+                            <span class="status-pill status-muted">Inactive</span>
+                            {% elif item.is_out_of_stock %}
+                            <span class="status-pill status-wait">Out</span>
+                            {% elif item.is_low_stock %}
+                            <span class="status-pill status-wait">Low</span>
+                            {% else %}
+                            <span class="status-pill status-good">OK</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <a href="{% url 'pharmacy:stock_edit' item.pk %}?from=inventory" class="btn btn-sm btn-outline-primary">Edit</a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="empty-state">
+            <i class="fas fa-boxes-stacked"></i>
+            <p>No inventory items found.</p>
+            <a href="{% url 'pharmacy:stock_add' %}?from=inventory" class="btn btn-primary">Add first item</a>
+        </div>
+        {% endif %}
+    </section>
+</section>
+{% endblock %}

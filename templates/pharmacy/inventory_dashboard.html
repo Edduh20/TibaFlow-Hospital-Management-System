@@ -1,0 +1,125 @@
+{% extends 'base.html' %}
+
+{% block title %}Inventory - TibaFlow HMS{% endblock %}
+
+{% block content %}
+<section class="dashboard-page">
+    <div class="dashboard-hero">
+        <div>
+            <p class="eyebrow">Hospital inventory</p>
+            <h1>{{ user.full_name }}</h1>
+            <p>Track medicines, supplies, and equipment across the hospital.</p>
+        </div>
+        <span class="date-pill"><i class="far fa-calendar-check"></i>{% now "F j, Y" %}</span>
+    </div>
+
+    <div class="stats-grid">
+        <article class="stat-card">
+            <span class="stat-icon tone-blue"><i class="fas fa-boxes-stacked"></i></span>
+            <div>
+                <p class="stat-label">Total Items</p>
+                <p class="stat-value">{{ stats.total_items }}</p>
+                <p class="stat-change">Active in stock</p>
+            </div>
+        </article>
+        <article class="stat-card">
+            <span class="stat-icon tone-amber"><i class="fas fa-box-open"></i></span>
+            <div>
+                <p class="stat-label">Low Stock</p>
+                <p class="stat-value">{{ stats.low_stock_count }}</p>
+                <p class="stat-change">Needs reorder</p>
+            </div>
+        </article>
+        <article class="stat-card">
+            <span class="stat-icon tone-purple"><i class="fas fa-circle-exclamation"></i></span>
+            <div>
+                <p class="stat-label">Out of Stock</p>
+                <p class="stat-value">{{ stats.out_of_stock }}</p>
+                <p class="stat-change">Unavailable</p>
+            </div>
+        </article>
+        <article class="stat-card">
+            <span class="stat-icon tone-green"><i class="fas fa-calendar-xmark"></i></span>
+            <div>
+                <p class="stat-label">Expiring Soon</p>
+                <p class="stat-value">{{ stats.expiring_soon }}</p>
+                <p class="stat-change">Within 30 days</p>
+            </div>
+        </article>
+    </div>
+
+    <div class="role-grid">
+        <article class="role-card">
+            <span class="stat-icon tone-blue"><i class="fas fa-pills"></i></span>
+            <h2>Medicines</h2>
+            <p>{{ stats.medicine_count }} medicine items in inventory.</p>
+            <a href="{% url 'pharmacy:inventory_list' %}?category=medicine" class="btn btn-primary">View</a>
+        </article>
+        <article class="role-card">
+            <span class="stat-icon tone-green"><i class="fas fa-kit-medical"></i></span>
+            <h2>Medical Supplies</h2>
+            <p>{{ stats.supply_count }} supply items tracked.</p>
+            <a href="{% url 'pharmacy:inventory_list' %}?category=supply" class="btn btn-success">View</a>
+        </article>
+        <article class="role-card">
+            <span class="stat-icon tone-amber"><i class="fas fa-stethoscope"></i></span>
+            <h2>Equipment</h2>
+            <p>{{ stats.equipment_count }} equipment items logged.</p>
+            <a href="{% url 'pharmacy:inventory_list' %}?category=equipment" class="btn btn-warning">View</a>
+        </article>
+    </div>
+
+    <div class="dashboard-grid-bottom">
+        <section class="panel">
+            <div class="panel-header">
+                <h2 class="panel-title">Low Stock Alerts</h2>
+                <a class="view-link" href="{% url 'pharmacy:inventory_list' %}?low_stock=1">View All</a>
+            </div>
+            {% if low_stock %}
+            <div class="appointment-list">
+                {% for item in low_stock %}
+                <div class="appointment-row">
+                    <span class="stat-icon tone-amber"><i class="fas fa-pills"></i></span>
+                    <div>
+                        <p class="row-title">{{ item.name }}</p>
+                        <p class="row-sub">{{ item.quantity }} {{ item.get_unit_display }} left · {{ item.get_category_display }}</p>
+                    </div>
+                    <a href="{% url 'pharmacy:stock_edit' item.pk %}?from=inventory" class="btn btn-sm btn-outline-primary">Restock</a>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <div class="empty-state"><p>All items are above reorder level.</p></div>
+            {% endif %}
+        </section>
+
+        <section class="panel">
+            <div class="panel-header">
+                <h2 class="panel-title">Expiring Soon</h2>
+                <a class="view-link" href="{% url 'pharmacy:inventory_list' %}">View All</a>
+            </div>
+            {% if expiring_soon %}
+            <div class="appointment-list">
+                {% for item in expiring_soon %}
+                <div class="appointment-row">
+                    <span class="stat-icon tone-green"><i class="far fa-calendar"></i></span>
+                    <div>
+                        <p class="row-title">{{ item.name }}</p>
+                        <p class="row-sub">Expires {{ item.expiry_date|date:"M j, Y" }}</p>
+                    </div>
+                    <a href="{% url 'pharmacy:stock_edit' item.pk %}?from=inventory" class="btn btn-sm btn-outline-primary">Update</a>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <div class="empty-state"><p>No items expiring in the next 30 days.</p></div>
+            {% endif %}
+        </section>
+    </div>
+
+    <div class="hero-actions mt-2">
+        <a href="{% url 'pharmacy:inventory_list' %}" class="btn btn-outline-primary">All Inventory Items</a>
+        <a href="{% url 'pharmacy:stock_add' %}?from=inventory" class="btn btn-primary">Add Item</a>
+    </div>
+</section>
+{% endblock %}

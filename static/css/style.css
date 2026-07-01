@@ -407,6 +407,57 @@ body {
 
 .form-panel .form-label { font-weight: 600; font-size: 0.875rem; }
 
+/* Login page */
+.auth-page {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: calc(100vh - 140px);
+    padding: 2rem 1rem;
+}
+
+.auth-card {
+    width: 100%;
+    max-width: 22rem;
+    background: #fff;
+    border-radius: 1rem;
+    padding: 1.75rem;
+    box-shadow: 0 2px 12px rgba(15, 23, 42, 0.08);
+    border: 1px solid #e8eef4;
+}
+
+.auth-card-wide {
+    max-width: 32rem;
+}
+
+.auth-link {
+    margin: 1.25rem 0 0;
+    text-align: center;
+    font-size: 0.9rem;
+    color: var(--text-muted);
+}
+
+.auth-header {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.75rem;
+    margin-bottom: 1.25rem;
+}
+
+.auth-header h1 {
+    margin: 0.2rem 0 0;
+    font-size: 1.25rem;
+    line-height: 1.3;
+}
+
+.auth-header .eyebrow {
+    margin: 0;
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--text-muted);
+}
+
 @media (max-width: 900px) {
     .app-shell { grid-template-columns: 1fr; }
     .app-sidebar { display: none; }

@@ -37,7 +37,7 @@ SEED_USERS = [
     {
         'username': 'doctor',
         'role': 'doctor',
-        'first_name': 'Dr. Anne',
+        'first_name': 'Anne',
         'last_name': 'Wanjiku',
         'email': 'doctor@tibaflow.local',
         'employee_id': 'EMP-DOC',

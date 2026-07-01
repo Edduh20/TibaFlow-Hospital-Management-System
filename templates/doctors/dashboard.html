@@ -3,6 +3,7 @@
 
 {% block title %}Doctor Dashboard - TibaFlow HMS{% endblock %}
 
+<<<<<<< HEAD
 {% block extra_css %}
 <style>
     .stat-card {
@@ -67,6 +68,47 @@
         margin-bottom: 1rem;
     }
 </style>
+=======
+{% block content %}
+<section class="dashboard-page">
+    <div class="dashboard-hero">
+        <div>
+            <p class="eyebrow">Welcome back,</p>
+            <h1>{{ user.display_name }}</h1>
+            <p>Manage consultations, orders, and prescriptions from one clinical workspace.</p>
+        </div>
+        <span class="date-pill"><i class="far fa-calendar-check"></i>{% now "F j, Y" %}</span>
+    </div>
+
+    <div class="stats-grid">
+        <article class="stat-card"><span class="stat-icon tone-blue"><i class="fas fa-user-injured"></i></span><div><p class="stat-label">Assigned Patients</p><p class="stat-value">24</p><p class="stat-change">6 waiting review</p></div><span class="sparkline"></span></article>
+        <article class="stat-card"><span class="stat-icon tone-green"><i class="fas fa-prescription-bottle-medical"></i></span><div><p class="stat-label">Prescriptions</p><p class="stat-value">18</p><p class="stat-change">+4 today</p></div><span class="sparkline"></span></article>
+        <article class="stat-card"><span class="stat-icon tone-purple"><i class="fas fa-flask-vial"></i></span><div><p class="stat-label">Lab Orders</p><p class="stat-value">11</p><p class="stat-change">3 urgent</p></div><span class="sparkline"></span></article>
+        <article class="stat-card"><span class="stat-icon tone-amber"><i class="far fa-clock"></i></span><div><p class="stat-label">Avg. Wait</p><p class="stat-value">14m</p><p class="stat-change">-8% this week</p></div><span class="sparkline"></span></article>
+    </div>
+
+    <div class="role-grid">
+        <article class="role-card">
+            <span class="stat-icon tone-blue"><i class="fas fa-user-injured"></i></span>
+            <h2>My Patients</h2>
+            <p>View assigned patients, notes, current diagnoses, and triage priority.</p>
+            <a href="#" class="btn btn-primary">View Patients</a>
+        </article>
+        <article class="role-card">
+            <span class="stat-icon tone-green"><i class="fas fa-file-prescription"></i></span>
+            <h2>Prescriptions</h2>
+            <p>Create new medication orders and send them directly to pharmacy.</p>
+            <a href="#" class="btn btn-success">Write Prescription</a>
+        </article>
+        <article class="role-card">
+            <span class="stat-icon tone-purple"><i class="fas fa-vials"></i></span>
+            <h2>Lab Tests</h2>
+            <p>Order investigations and track pending or completed lab results.</p>
+            <a href="#" class="btn btn-primary">Order Test</a>
+        </article>
+    </div>
+</section>
+>>>>>>> 8ff965a769794c980c8a4b81ef95d309f50a0d54
 {% endblock %}
 
 {% block content %}

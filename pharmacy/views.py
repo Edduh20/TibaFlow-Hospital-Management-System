@@ -1,3 +1,5 @@
+from datetime import timedelta
+
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.db import models as db_models
@@ -23,6 +25,27 @@ def pharmacy_stats():
         'awaiting_payment': Prescription.objects.filter(status='awaiting_payment').count(),
         'total_medicines': medicines.count(),
     }
+
+
+def inventory_stats():
+    today = timezone.localdate()
+    soon = today + timedelta(days=30)
+    items = Medicine.objects.filter(is_active=True)
+    return {
+        'total_items': items.count(),
+        'low_stock_count': items.filter(quantity__lte=db_models.F('reorder_level')).count(),
+        'out_of_stock': items.filter(quantity=0).count(),
+        'expiring_soon': items.filter(expiry_date__lte=soon, expiry_date__gte=today).count(),
+        'medicine_count': items.filter(category='medicine').count(),
+        'supply_count': items.filter(category='supply').count(),
+        'equipment_count': items.filter(category='equipment').count(),
+    }
+
+
+def _stock_redirect(request, default='pharmacy:stock_list'):
+    if request.GET.get('from') == 'inventory' or request.POST.get('from') == 'inventory':
+        return redirect('pharmacy:inventory_list')
+    return redirect(default)
 
 
 @login_required
@@ -119,8 +142,14 @@ def stock_add(request):
     if request.method == 'POST' and form.is_valid():
         form.save()
         messages.success(request, f'{form.instance.name} added to stock.')
-        return redirect('pharmacy:stock_list')
-    return render(request, 'pharmacy/stock_form.html', {'form': form, 'title': 'Add Medicine'})
+        return _stock_redirect(request)
+    return render(request, 'pharmacy/stock_form.html', {
+        'form': form,
+        'title': 'Add Item',
+        'from_inventory': (
+            request.GET.get('from') == 'inventory' or request.POST.get('from') == 'inventory'
+        ),
+    })
 
 
 @login_required
@@ -131,9 +160,55 @@ def stock_edit(request, pk):
     if request.method == 'POST' and form.is_valid():
         form.save()
         messages.success(request, f'{medicine.name} updated.')
-        return redirect('pharmacy:stock_list')
+        return _stock_redirect(request)
     return render(request, 'pharmacy/stock_form.html', {
         'form': form,
         'title': f'Edit {medicine.name}',
         'medicine': medicine,
+        'from_inventory': (
+            request.GET.get('from') == 'inventory' or request.POST.get('from') == 'inventory'
+        ),
     })
+
+
+@login_required
+@app_role_required('pharmacy')
+def inventory_dashboard(request):
+    stats = inventory_stats()
+    today = timezone.localdate()
+    soon = today + timedelta(days=30)
+    low_stock = Medicine.objects.filter(
+        is_active=True,
+        quantity__lte=db_models.F('reorder_level'),
+    )[:5]
+    expiring_soon = Medicine.objects.filter(
+        is_active=True,
+        expiry_date__lte=soon,
+        expiry_date__gte=today,
+    ).order_by('expiry_date')[:5]
+    context = {
+        'user': request.user,
+        'stats': stats,
+        'low_stock': low_stock,
+        'expiring_soon': expiring_soon,
+    }
+    return render(request, 'pharmacy/inventory_dashboard.html', context)
+
+
+@login_required
+@app_role_required('pharmacy')
+def inventory_list(request):
+    items = Medicine.objects.all()
+    category = request.GET.get('category', 'all')
+    low_stock_only = request.GET.get('low_stock') == '1'
+    if category and category != 'all':
+        items = items.filter(category=category)
+    if low_stock_only:
+        items = items.filter(quantity__lte=db_models.F('reorder_level'))
+    context = {
+        'items': items,
+        'current_category': category,
+        'low_stock_only': low_stock_only,
+        'categories': Medicine.CATEGORY_CHOICES,
+    }
+    return render(request, 'pharmacy/inventory_list.html', context)

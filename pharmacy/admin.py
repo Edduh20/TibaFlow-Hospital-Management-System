@@ -10,8 +10,8 @@ class PrescriptionItemInline(admin.TabularInline):
 
 @admin.register(Medicine)
 class MedicineAdmin(admin.ModelAdmin):
-    list_display = ('name', 'generic_name', 'quantity', 'unit', 'reorder_level', 'is_active')
-    list_filter = ('is_active', 'unit')
+    list_display = ('name', 'category', 'generic_name', 'quantity', 'unit', 'reorder_level', 'is_active')
+    list_filter = ('is_active', 'category', 'unit')
     search_fields = ('name', 'generic_name')
 
 
