@@ -1,24 +1,20 @@
-from django.http import JsonResponse
-from django.middleware.csrf import get_token
 from django.shortcuts import render, redirect
 from django.contrib.auth.decorators import login_required
-from django.views.decorators.csrf import ensure_csrf_cookie
-from django.views.decorators.http import require_GET
 from django.utils import timezone
 from datetime import datetime, timedelta
 from django.db.models import Count, Sum
-
-
-@require_GET
-@ensure_csrf_cookie
-def csrf_token(request):
-    """Return the current CSRF token for pages with stale POST forms."""
-    return JsonResponse({'csrfToken': get_token(request)})
+from django.http import JsonResponse
+from django.middleware.csrf import get_token
 
 
 def home(request):
     """Landing page / Home page"""
     return render(request, 'home.html')
+
+
+def csrf_token(request):
+    """Return CSRF token for AJAX requests"""
+    return JsonResponse({'csrfToken': get_token(request)})
 
 
 @login_required
@@ -28,10 +24,13 @@ def dashboard(request):
     
     if user.role == 'admin':
         return redirect('core:admin_dashboard')
+    
     elif user.role == 'reception':
         return render(request, 'reception/dashboard.html', context)
+    
     elif user.role == 'triage':
         return render(request, 'triage/dashboard.html', context)
+    
     elif user.role == 'doctor':
         from patients.models import PatientVisit, Patient
         from doctors.models import MedicalRecord, Prescription, LabOrder, ImagingOrder
@@ -39,27 +38,22 @@ def dashboard(request):
         doctor = user
         today = timezone.now().date()
         
-        # Get patients waiting from triage
         waiting_patients = PatientVisit.objects.filter(
             status='with_doctor'
         ).order_by('arrival_time')
         
-        # Get doctor's assigned patients
         assigned_patients = Patient.objects.filter(
             primary_physician=doctor
         ).order_by('-created_at')
         
-        # Get patient records created by this doctor
         my_records = MedicalRecord.objects.filter(
             doctor=doctor
         ).order_by('-created_at')[:10]
         
-        # Get recent prescriptions
         recent_prescriptions = Prescription.objects.filter(
             doctor=doctor
         ).order_by('-created_at')[:5]
         
-        # Get pending lab and imaging orders
         pending_lab_orders = LabOrder.objects.filter(
             doctor=doctor,
             status__in=['ordered', 'pending']
@@ -70,7 +64,6 @@ def dashboard(request):
             status__in=['ordered', 'pending']
         ).count()
         
-        # Get returning patients count
         returning_patients = waiting_patients.filter(is_priority_return=True).count()
         
         context.update({
@@ -87,11 +80,110 @@ def dashboard(request):
         })
         
         return render(request, 'doctors/dashboard.html', context)
+    
     elif user.role == 'pharmacy':
         return render(request, 'pharmacy/dashboard.html', context)
+    
     elif user.role == 'lab':
+        from doctors.models import LabOrder, ImagingOrder
+        from laboratory.models import LabResult, ImagingResult
+        
+        today = timezone.now().date()
+        
+        # Get pending lab tests
+        pending_lab = LabOrder.objects.filter(
+            status__in=['ordered', 'pending']
+        ).order_by('created_at')
+        
+        # Get pending imaging tests
+        pending_imaging = ImagingOrder.objects.filter(
+            status__in=['ordered', 'pending']
+        ).order_by('created_at')
+        
+        # Get in progress tests
+        in_progress_lab = LabOrder.objects.filter(
+            status='in_progress'
+        ).order_by('-created_at')
+        
+        in_progress_imaging = ImagingOrder.objects.filter(
+            status='in_progress'
+        ).order_by('-created_at')
+        
+        # Get tests needing clarification
+        clarification_needed = LabResult.objects.filter(
+            status='clarification_needed'
+        ).order_by('clarification_requested_at')
+        
+        clarification_needed_imaging = ImagingResult.objects.filter(
+            status='clarification_needed'
+        ).order_by('clarification_requested_at')
+        
+        # Get completed tests today
+        completed_lab_today = LabResult.objects.filter(
+            completed_at__date=today
+        ).count()
+        
+        completed_imaging_today = ImagingResult.objects.filter(
+            completed_at__date=today
+        ).count()
+        
+        context.update({
+            'pending_lab': pending_lab[:10],
+            'pending_lab_count': pending_lab.count(),
+            'pending_imaging': pending_imaging[:10],
+            'pending_imaging_count': pending_imaging.count(),
+            'in_progress_lab': in_progress_lab[:10],
+            'in_progress_lab_count': in_progress_lab.count(),
+            'in_progress_imaging': in_progress_imaging[:10],
+            'in_progress_imaging_count': in_progress_imaging.count(),
+            'clarification_needed': clarification_needed[:5],
+            'clarification_needed_count': clarification_needed.count(),
+            'clarification_needed_imaging': clarification_needed_imaging[:5],
+            'clarification_needed_imaging_count': clarification_needed_imaging.count(),
+            'completed_lab_today': completed_lab_today,
+            'completed_imaging_today': completed_imaging_today,
+        })
+        
         return render(request, 'laboratory/dashboard.html', context)
+    
     elif user.role == 'nurse':
+        from patients.models import Patient
+        from triage.models import TriageRecord
+        from nurses.models import MedicationAdministration, PatientObservation
+        from doctors.models import Prescription
+        
+        admitted_patients = Patient.objects.filter(
+            is_admitted=True
+        ).order_by('-admission_date')
+        
+        nursing_care_patients = TriageRecord.objects.filter(
+            status='nursing_care',
+            nursing_care_completed=False
+        ).order_by('created_at')
+        
+        pending_medications = MedicationAdministration.objects.filter(
+            status='pending'
+        ).order_by('created_at')
+        
+        recent_observations = PatientObservation.objects.filter(
+            created_by=user
+        ).order_by('-created_at')[:10]
+        
+        prescriptions_today = Prescription.objects.filter(
+            created_at__date=timezone.now().date()
+        ).count()
+        
+        context.update({
+            'admitted_patients': admitted_patients[:10],
+            'admitted_count': admitted_patients.count(),
+            'nursing_care_patients': nursing_care_patients[:10],
+            'nursing_care_count': nursing_care_patients.count(),
+            'pending_medications': pending_medications[:10],
+            'pending_medications_count': pending_medications.count(),
+            'recent_observations': recent_observations,
+            'prescriptions_today': prescriptions_today,
+        })
+        
         return render(request, 'nurses/dashboard.html', context)
     
     return render(request, 'dashboard.html', context)

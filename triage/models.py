@@ -1,8 +1,11 @@
 from django.db import models
 from django.contrib.auth import get_user_model
 from patients.models import Patient, PatientVisit
+from datetime import datetime
+from django.utils import timezone
 
 User = get_user_model()
+
 
 class TriageRecord(models.Model):
     PRIORITY_CHOICES = (
@@ -10,6 +13,15 @@ class TriageRecord(models.Model):
         ('urgent', 'Urgent'),
         ('semi_urgent', 'Semi-Urgent'),
         ('non_urgent', 'Non-Urgent'),
+    )
+    
+    VISIT_STATUS = (
+        ('waiting', 'Waiting'),
+        ('in_progress', 'In Progress'),
+        ('completed', 'Completed'),
+        ('sent_to_doctor', 'Sent to Doctor'),
+        ('nursing_care', 'Nursing Care'),
+        ('completed_care', 'Completed Care'),
     )
     
     visit = models.OneToOneField(PatientVisit, on_delete=models.CASCADE, related_name='triage')
@@ -32,6 +44,13 @@ class TriageRecord(models.Model):
     current_medications = models.TextField(blank=True)
     medical_history = models.TextField(blank=True)
     
+    # Nursing Care
+    needs_nursing_care = models.BooleanField(default=False)
+    nursing_instructions = models.TextField(blank=True, help_text="Instructions from doctor for nursing care")
+    nursing_notes = models.TextField(blank=True, help_text="Notes from nurse")
+    nursing_care_completed = models.BooleanField(default=False)
+    nursing_care_completed_at = models.DateTimeField(null=True, blank=True)
+    
     # Nurse Notes
     nurse_notes = models.TextField(blank=True)
     triage_nurse = models.ForeignKey(User, on_delete=models.SET_NULL, 
@@ -39,9 +58,12 @@ class TriageRecord(models.Model):
                                      limit_choices_to={'role__in': ['triage', 'nurse']})
     
     # Status
+    status = models.CharField(max_length=20, choices=VISIT_STATUS, default='waiting')
     is_completed = models.BooleanField(default=False)
     completed_at = models.DateTimeField(null=True, blank=True)
+    sent_to_doctor_at = models.DateTimeField(null=True, blank=True)
     
+    # Timestamps
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     
@@ -54,3 +76,40 @@ class TriageRecord(models.Model):
             height_m = self.height / 100
             return self.weight / (height_m ** 2)
         return None
+    
+    def send_to_doctor(self):
+        """Send patient to doctor"""
+        self.status = 'sent_to_doctor'
+        self.is_completed = True
+        self.completed_at = timezone.now()
+        self.sent_to_doctor_at = timezone.now()
+        self.visit.status = 'with_doctor'
+        self.visit.save()
+        self.save()
+    
+    def receive_from_doctor(self, instructions):
+        """Receive patient from doctor for nursing care"""
+        self.status = 'nursing_care'
+        self.needs_nursing_care = True
+        self.nursing_instructions = instructions
+        self.save()
+    
+    def complete_nursing_care(self, notes=None):
+        """Complete nursing care"""
+        self.nursing_care_completed = True
+        self.nursing_care_completed_at = timezone.now()
+        self.status = 'completed_care'
+        if notes:
+            self.nursing_notes = notes
+        self.save()
+    
+    def complete_triage(self):
+        """Complete triage assessment"""
+        self.status = 'completed'
+        self.is_completed = True
+        self.completed_at = timezone.now()
+        self.save()
+    
+    class Meta:
+        ordering = ['-created_at']
+        db_table = 'triage_records'

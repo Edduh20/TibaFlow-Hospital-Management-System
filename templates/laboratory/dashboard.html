@@ -1,29 +1,362 @@
 {% extends 'base.html' %}
+{% load static %}
 
 {% block title %}Laboratory Dashboard - TibaFlow HMS{% endblock %}
 
+{% block extra_css %}
+<style>
+    .stat-card {
+        background: white;
+        border-radius: 12px;
+        padding: 1.5rem;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        transition: all 0.3s ease;
+        border-left: 4px solid #0d6efd;
+        height: 100%;
+    }
+    .stat-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+    }
+    .stat-card .stat-icon {
+        font-size: 2rem;
+        opacity: 0.3;
+    }
+    .stat-card .stat-number {
+        font-size: 2rem;
+        font-weight: 700;
+    }
+    .stat-card.pending { border-left-color: #ffc107; }
+    .stat-card.in-progress { border-left-color: #0d6efd; }
+    .stat-card.clarification { border-left-color: #dc3545; }
+    .stat-card.completed { border-left-color: #198754; }
+    
+    .queue-item {
+        transition: all 0.3s ease;
+    }
+    .queue-item:hover {
+        background: #f8f9fa;
+        transform: translateX(5px);
+    }
+    .empty-state {
+        padding: 3rem 1rem;
+        text-align: center;
+    }
+    .empty-state i {
+        font-size: 4rem;
+        color: #dee2e6;
+        margin-bottom: 1rem;
+    }
+    .priority-badge {
+        font-size: 0.7rem;
+        padding: 0.25rem 0.75rem;
+    }
+</style>
+{% endblock %}
+
 {% block content %}
-<section class="dashboard-page">
-    <div class="dashboard-hero">
+<div class="container-fluid">
+    <!-- Page Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
         <div>
-            <p class="eyebrow">Laboratory queue</p>
-            <h1>{% if user.full_name %}{{ user.full_name }}{% else %}{{ user.username }}{% endif %}</h1>
-            <p>Process requests, record results, and keep clinicians updated.</p>
+            <h1 class="h2 mb-1">
+                <i class="fas fa-flask text-primary me-2"></i>Laboratory Dashboard
+            </h1>
+            <p class="text-muted">Manage lab and imaging tests</p>
         </div>
-        <span class="date-pill"><i class="far fa-calendar-check"></i>{% now "F j, Y" %}</span>
+        <div>
+            <a href="{% url 'laboratory:lab_queue' %}" class="btn btn-outline-primary">
+                <i class="fas fa-flask me-2"></i>Lab Queue
+            </a>
+            <a href="{% url 'laboratory:imaging_queue' %}" class="btn btn-outline-info">
+                <i class="fas fa-x-ray me-2"></i>Imaging Queue
+            </a>
+            <a href="{% url 'laboratory:completed_tests' %}" class="btn btn-outline-success">
+                <i class="fas fa-check-circle me-2"></i>Completed
+            </a>
+        </div>
     </div>
 
-    <div class="stats-grid">
-        <article class="stat-card"><span class="stat-icon tone-blue"><i class="fas fa-vial"></i></span><div><p class="stat-label">Pending Tests</p><p class="stat-value">36</p><p class="stat-change">9 urgent</p></div><span class="sparkline"></span></article>
-        <article class="stat-card"><span class="stat-icon tone-green"><i class="fas fa-clipboard-check"></i></span><div><p class="stat-label">Results Submitted</p><p class="stat-value">58</p><p class="stat-change">+14 today</p></div><span class="sparkline"></span></article>
-        <article class="stat-card"><span class="stat-icon tone-amber"><i class="fas fa-microscope"></i></span><div><p class="stat-label">In Progress</p><p class="stat-value">12</p><p class="stat-change">Avg. 28m</p></div><span class="sparkline"></span></article>
-        <article class="stat-card"><span class="stat-icon tone-purple"><i class="far fa-file-lines"></i></span><div><p class="stat-label">Reports</p><p class="stat-value">44</p><p class="stat-change">Ready for review</p></div><span class="sparkline"></span></article>
+    <!-- Stats Cards -->
+    <div class="row g-4 mb-4">
+        <div class="col-md-3 col-sm-6">
+            <div class="stat-card pending">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                        <div class="stat-number">{{ pending_lab_count|add:pending_imaging_count }}</div>
+                        <div class="text-muted">Pending Tests</div>
+                        <div class="text-muted small">Lab: {{ pending_lab_count }} | Imaging: {{ pending_imaging_count }}</div>
+                    </div>
+                    <div class="stat-icon">
+                        <i class="fas fa-clock"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 col-sm-6">
+            <div class="stat-card in-progress">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                        <div class="stat-number">{{ in_progress_lab_count|add:in_progress_imaging_count }}</div>
+                        <div class="text-muted">In Progress</div>
+                        <div class="text-muted small">Lab: {{ in_progress_lab_count }} | Imaging: {{ in_progress_imaging_count }}</div>
+                    </div>
+                    <div class="stat-icon">
+                        <i class="fas fa-spinner"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 col-sm-6">
+            <div class="stat-card clarification">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                        <div class="stat-number">{{ clarification_needed_count|add:clarification_needed_imaging_count }}</div>
+                        <div class="text-muted">Clarification Needed</div>
+                        {% if clarification_needed_count > 0 or clarification_needed_imaging_count > 0 %}
+                            <span class="badge bg-danger">
+                                <i class="fas fa-circle text-white me-1" style="font-size: 0.5rem;"></i>
+                                Action Required
+                            </span>
+                        {% endif %}
+                    </div>
+                    <div class="stat-icon">
+                        <i class="fas fa-question-circle"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 col-sm-6">
+            <div class="stat-card completed">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                        <div class="stat-number">{{ completed_lab_today|add:completed_imaging_today }}</div>
+                        <div class="text-muted">Completed Today</div>
+                        <div class="text-muted small">Lab: {{ completed_lab_today }} | Imaging: {{ completed_imaging_today }}</div>
+                    </div>
+                    <div class="stat-icon">
+                        <i class="fas fa-check-circle"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 
-    <div class="role-grid">
-        <article class="role-card"><span class="stat-icon tone-blue"><i class="fas fa-flask-vial"></i></span><h2>Pending Tests</h2><p>Review lab orders waiting to be collected or processed.</p><a href="#" class="btn btn-primary">View</a></article>
-        <article class="role-card"><span class="stat-icon tone-green"><i class="fas fa-file-medical"></i></span><h2>Submit Results</h2><p>Enter findings and release verified results to care teams.</p><a href="#" class="btn btn-success">Submit</a></article>
-        <article class="role-card"><span class="stat-icon tone-amber"><i class="fas fa-triangle-exclamation"></i></span><h2>Critical Results</h2><p>Flag urgent values and notify clinicians for fast action.</p><a href="#" class="btn btn-warning">Review</a></article>
+    <div class="row g-4">
+        <!-- Pending Lab Tests -->
+        <div class="col-lg-6">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-flask me-2"></i>Pending Lab Tests
+                        {% if pending_lab_count > 0 %}
+                            <span class="badge bg-warning ms-2">{{ pending_lab_count }}</span>
+                        {% endif %}
+                    </h5>
+                    <a href="{% url 'laboratory:lab_queue' %}" class="btn btn-sm btn-link">View All</a>
+                </div>
+                <div class="card-body p-0">
+                    {% if pending_lab %}
+                        <div class="list-group list-group-flush">
+                            {% for order in pending_lab %}
+                                <a href="{% url 'laboratory:perform_lab_test' order.id %}" 
+                                   class="list-group-item list-group-item-action queue-item">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <div>
+                                            <strong>{{ order.patient.full_name }}</strong>
+                                            <span class="badge bg-secondary ms-2">{{ order.patient.age }} yrs</span>
+                                            <div class="text-muted small">
+                                                <i class="fas fa-flask me-1"></i>
+                                                {{ order.test_name }}
+                                            </div>
+                                        </div>
+                                        <div class="d-flex align-items-center gap-2">
+                                            <span class="badge bg-{% if order.priority == 'emergency' %}danger{% elif order.priority == 'urgent' %}warning{% else %}secondary{% endif %} priority-badge">
+                                                {{ order.get_priority_display }}
+                                            </span>
+                                            <i class="fas fa-chevron-right text-muted"></i>
+                                        </div>
+                                    </div>
+                                </a>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <div class="empty-state">
+                            <i class="fas fa-check-circle"></i>
+                            <h5 class="text-muted">No Pending Lab Tests</h5>
+                            <p class="text-muted small">All lab tests have been completed.</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Pending Imaging Tests -->
+        <div class="col-lg-6">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-x-ray me-2"></i>Pending Imaging
+                        {% if pending_imaging_count > 0 %}
+                            <span class="badge bg-warning ms-2">{{ pending_imaging_count }}</span>
+                        {% endif %}
+                    </h5>
+                    <a href="{% url 'laboratory:imaging_queue' %}" class="btn btn-sm btn-link">View All</a>
+                </div>
+                <div class="card-body p-0">
+                    {% if pending_imaging %}
+                        <div class="list-group list-group-flush">
+                            {% for order in pending_imaging %}
+                                <a href="{% url 'laboratory:perform_imaging_test' order.id %}" 
+                                   class="list-group-item list-group-item-action queue-item">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <div>
+                                            <strong>{{ order.patient.full_name }}</strong>
+                                            <span class="badge bg-secondary ms-2">{{ order.patient.age }} yrs</span>
+                                            <div class="text-muted small">
+                                                <i class="fas fa-x-ray me-1"></i>
+                                                {{ order.get_imaging_type_display }} - {{ order.body_part }}
+                                            </div>
+                                        </div>
+                                        <div class="d-flex align-items-center gap-2">
+                                            <span class="badge bg-{% if order.priority == 'emergency' %}danger{% elif order.priority == 'urgent' %}warning{% else %}secondary{% endif %} priority-badge">
+                                                {{ order.get_priority_display }}
+                                            </span>
+                                            <i class="fas fa-chevron-right text-muted"></i>
+                                        </div>
+                                    </div>
+                                </a>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <div class="empty-state">
+                            <i class="fas fa-check-circle"></i>
+                            <h5 class="text-muted">No Pending Imaging Tests</h5>
+                            <p class="text-muted small">All imaging tests have been completed.</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Clarification Needed -->
+        <div class="col-lg-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-question-circle me-2"></i>Clarification Needed
+                        {% if clarification_needed_count > 0 or clarification_needed_imaging_count > 0 %}
+                            <span class="badge bg-danger ms-2">{{ clarification_needed_count|add:clarification_needed_imaging_count }}</span>
+                        {% endif %}
+                    </h5>
+                </div>
+                <div class="card-body p-0">
+                    {% if clarification_needed or clarification_needed_imaging %}
+                        <div class="list-group list-group-flush">
+                            {% for result in clarification_needed %}
+                                <div class="list-group-item">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <div>
+                                            <strong>{{ result.patient.full_name }}</strong>
+                                            <span class="badge bg-danger ms-2">Lab</span>
+                                            <div class="text-muted small">
+                                                {{ result.clarification_request|truncatechars:50 }}
+                                            </div>
+                                        </div>
+                                        <a href="{% url 'laboratory:clarification_response' result.id %}" 
+                                           class="btn btn-sm btn-info">
+                                            <i class="fas fa-eye me-1"></i>View
+                                        </a>
+                                    </div>
+                                </div>
+                            {% endfor %}
+                            {% for result in clarification_needed_imaging %}
+                                <div class="list-group-item">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <div>
+                                            <strong>{{ result.patient.full_name }}</strong>
+                                            <span class="badge bg-info ms-2">Imaging</span>
+                                            <div class="text-muted small">
+                                                {{ result.clarification_request|truncatechars:50 }}
+                                            </div>
+                                        </div>
+                                        <a href="{% url 'laboratory:clarification_response_imaging' result.id %}" 
+                                           class="btn btn-sm btn-info">
+                                            <i class="fas fa-eye me-1"></i>View
+                                        </a>
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <div class="p-3 text-center text-muted">
+                            <small>No clarification needed</small>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Recent Activity -->
+        <div class="col-lg-6">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-clock me-2"></i>Recent Activity
+                    </h5>
+                    <a href="{% url 'laboratory:completed_tests' %}" class="btn btn-sm btn-link">View All</a>
+                </div>
+                <div class="card-body p-0">
+                    <div class="list-group list-group-flush">
+                        {% if in_progress_lab %}
+                            {% for order in in_progress_lab %}
+                                <div class="list-group-item">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <div>
+                                            <strong>{{ order.patient.full_name }}</strong>
+                                            <span class="badge bg-primary ms-2">Lab</span>
+                                            <div class="text-muted small">
+                                                <i class="fas fa-spinner fa-spin me-1"></i>
+                                                In Progress - {{ order.test_name }}
+                                            </div>
+                                        </div>
+                                        <a href="{% url 'laboratory:perform_lab_test' order.id %}" 
+                                           class="btn btn-sm btn-primary">
+                                            <i class="fas fa-edit me-1"></i>Continue
+                                        </a>
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        {% endif %}
+                        {% if in_progress_imaging %}
+                            {% for order in in_progress_imaging %}
+                                <div class="list-group-item">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <div>
+                                            <strong>{{ order.patient.full_name }}</strong>
+                                            <span class="badge bg-info ms-2">Imaging</span>
+                                            <div class="text-muted small">
+                                                <i class="fas fa-spinner fa-spin me-1"></i>
+                                                In Progress - {{ order.get_imaging_type_display }}
+                                            </div>
+                                        </div>
+                                        <a href="{% url 'laboratory:perform_imaging_test' order.id %}" 
+                                           class="btn btn-sm btn-primary">
+                                            <i class="fas fa-edit me-1"></i>Continue
+                                        </a>
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        {% endif %}
+                        {% if not in_progress_lab and not in_progress_imaging %}
+                            <div class="p-3 text-center text-muted">
+                                <small>No tests in progress</small>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
-</section>
+</div>
 {% endblock %}

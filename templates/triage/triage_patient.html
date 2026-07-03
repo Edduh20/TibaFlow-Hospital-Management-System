@@ -1,0 +1,199 @@
+{% extends 'base.html' %}
+{% load crispy_forms_tags %}
+{% load static %}
+
+{% block title %}Triage Patient - TibaFlow HMS{% endblock %}
+
+{% block extra_css %}
+<style>
+    .patient-summary {
+        background: #f8f9fa;
+        border-radius: 10px;
+        padding: 1rem;
+        margin-bottom: 1.5rem;
+    }
+    .patient-summary .label {
+        color: #6c757d;
+        font-size: 0.8rem;
+        font-weight: 600;
+    }
+    .patient-summary .value {
+        font-weight: 500;
+        font-size: 1.1rem;
+    }
+    .vital-section {
+        background: white;
+        border-radius: 12px;
+        padding: 1.5rem;
+        margin-bottom: 1.5rem;
+        border: 1px solid rgba(0,0,0,0.05);
+    }
+    .vital-section h5 {
+        color: #0d6efd;
+        font-weight: 600;
+        margin-bottom: 1rem;
+        padding-bottom: 0.5rem;
+        border-bottom: 2px solid rgba(13, 110, 253, 0.1);
+    }
+    .vital-section h5 i {
+        margin-right: 0.5rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="h2 mb-1">
+                <i class="fas fa-heart-pulse text-primary me-2"></i>Triage Assessment
+            </h1>
+            <p class="text-muted">Assess patient vitals and priority</p>
+        </div>
+        <div>
+            <a href="{% url 'triage:dashboard' %}" class="btn btn-secondary">
+                <i class="fas fa-arrow-left me-1"></i>Back to Dashboard
+            </a>
+        </div>
+    </div>
+
+    <!-- Patient Summary (Limited Info) -->
+    <div class="patient-summary">
+        <div class="row">
+            <div class="col-md-3">
+                <div class="label">Patient Name</div>
+                <div class="value">{{ patient.full_name }}</div>
+            </div>
+            <div class="col-md-2">
+                <div class="label">Age</div>
+                <div class="value">{{ patient.age }} years</div>
+            </div>
+            <div class="col-md-3">
+                <div class="label">Visit Number</div>
+                <div class="value">{{ visit.visit_number }}</div>
+            </div>
+            <div class="col-md-2">
+                <div class="label">Visit Type</div>
+                <div class="value">{{ visit.get_visit_type_display }}</div>
+            </div>
+            <div class="col-md-2">
+                <div class="label">Arrival Time</div>
+                <div class="value">{{ visit.arrival_time|date:"H:i" }}</div>
+            </div>
+        </div>
+    </div>
+
+    <form method="post">
+        {% csrf_token %}
+
+        <!-- Vitals -->
+        <div class="vital-section">
+            <h5><i class="fas fa-heartbeat"></i>Vitals</h5>
+            <div class="row">
+                <div class="col-md-3">
+                    {{ form.temperature|as_crispy_field }}
+                </div>
+                <div class="col-md-3">
+                    {{ form.heart_rate|as_crispy_field }}
+                </div>
+                <div class="col-md-3">
+                    {{ form.respiratory_rate|as_crispy_field }}
+                </div>
+                <div class="col-md-3">
+                    {{ form.oxygen_saturation|as_crispy_field }}
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-md-4">
+                    {{ form.blood_pressure_systolic|as_crispy_field }}
+                </div>
+                <div class="col-md-4">
+                    {{ form.blood_pressure_diastolic|as_crispy_field }}
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-md-4">
+                    {{ form.weight|as_crispy_field }}
+                </div>
+                <div class="col-md-4">
+                    {{ form.height|as_crispy_field }}
+                </div>
+                <div class="col-md-4">
+                    <div class="form-group">
+                        <label class="form-label">BMI</label>
+                        <div class="form-control" style="background: #f8f9fa;">
+                            {% if triage.bmi %}
+                                {{ triage.bmi|floatformat:1 }}
+                            {% else %}
+                                <span class="text-muted">Calculate with weight & height</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Assessment -->
+        <div class="vital-section">
+            <h5><i class="fas fa-clipboard-list"></i>Assessment</h5>
+            {{ form.chief_complaint|as_crispy_field }}
+            {{ form.priority|as_crispy_field }}
+        </div>
+
+        <!-- Medical History -->
+        <div class="vital-section">
+            <h5><i class="fas fa-history"></i>Medical History</h5>
+            {{ form.allergies|as_crispy_field }}
+            {{ form.current_medications|as_crispy_field }}
+            {{ form.medical_history|as_crispy_field }}
+        </div>
+
+        <!-- Notes -->
+        <div class="vital-section">
+            <h5><i class="fas fa-pen"></i>Nurse Notes</h5>
+            {{ form.nurse_notes|as_crispy_field }}
+        </div>
+
+        <!-- Submit -->
+        <div class="d-flex flex-wrap justify-content-between gap-2">
+            <a href="{% url 'triage:dashboard' %}" class="btn btn-secondary">
+                <i class="fas fa-times me-1"></i>Cancel
+            </a>
+            <div>
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-save me-1"></i>Complete Triage
+                </button>
+                <button type="submit" name="send_to_doctor" value="1" class="btn btn-success">
+                    <i class="fas fa-arrow-right me-1"></i>Complete & Send to Doctor
+                </button>
+            </div>
+        </div>
+    </form>
+</div>
+
+<script>
+// Auto-calculate BMI
+document.addEventListener('DOMContentLoaded', function() {
+    const weightInput = document.querySelector('#id_weight');
+    const heightInput = document.querySelector('#id_height');
+    const bmiDisplay = document.querySelector('#id_bmi_display');
+    
+    if (weightInput && heightInput) {
+        function calculateBMI() {
+            const weight = parseFloat(weightInput.value);
+            const height = parseFloat(heightInput.value);
+            if (weight && height && height > 0) {
+                const heightM = height / 100;
+                const bmi = weight / (heightM * heightM);
+                document.getElementById('bmi_value').textContent = bmi.toFixed(1);
+            } else {
+                document.getElementById('bmi_value').textContent = '-';
+            }
+        }
+        
+        weightInput.addEventListener('input', calculateBMI);
+        heightInput.addEventListener('input', calculateBMI);
+    }
+});
+</script>
+{% endblock %}

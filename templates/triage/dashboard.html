@@ -1,29 +1,297 @@
 {% extends 'base.html' %}
+{% load static %}
 
 {% block title %}Triage Dashboard - TibaFlow HMS{% endblock %}
 
+{% block extra_css %}
+<style>
+    .stat-card {
+        background: white;
+        border-radius: 12px;
+        padding: 1.5rem;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        transition: all 0.3s ease;
+        border-left: 4px solid #0d6efd;
+        height: 100%;
+    }
+    .stat-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+    }
+    .stat-card .stat-icon {
+        font-size: 2rem;
+        opacity: 0.3;
+    }
+    .stat-card .stat-number {
+        font-size: 2rem;
+        font-weight: 700;
+    }
+    .stat-card.waiting { border-left-color: #ffc107; }
+    .stat-card.in-progress { border-left-color: #0d6efd; }
+    .stat-card.nursing { border-left-color: #198754; }
+    .stat-card.completed { border-left-color: #6c757d; }
+    
+    .queue-item {
+        transition: all 0.3s ease;
+    }
+    .queue-item:hover {
+        background: #f8f9fa;
+        transform: translateX(5px);
+    }
+    .priority-badge {
+        font-size: 0.7rem;
+        padding: 0.25rem 0.75rem;
+    }
+    .empty-state {
+        padding: 3rem 1rem;
+        text-align: center;
+    }
+    .empty-state i {
+        font-size: 4rem;
+        color: #dee2e6;
+        margin-bottom: 1rem;
+    }
+    .quick-action-btn {
+        transition: all 0.3s ease;
+    }
+    .quick-action-btn:hover {
+        transform: scale(1.05);
+    }
+</style>
+{% endblock %}
+
 {% block content %}
-<section class="dashboard-page">
-    <div class="dashboard-hero">
+<div class="container-fluid">
+    <!-- Page Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
         <div>
-            <p class="eyebrow">Triage station</p>
-            <h1>{% if user.full_name %}{{ user.full_name }}{% else %}{{ user.username }}{% endif %}</h1>
-            <p>Assess urgency, capture vitals, and route patients to the right team.</p>
+            <h1 class="h2 mb-1">
+                <i class="fas fa-heart-pulse text-primary me-2"></i>Triage Dashboard
+            </h1>
+            <p class="text-muted">Manage patient triage and nursing care</p>
         </div>
-        <span class="date-pill"><i class="far fa-calendar-check"></i>{% now "F j, Y" %}</span>
+        <div>
+            <a href="{% url 'triage:queue' %}" class="btn btn-outline-primary">
+                <i class="fas fa-list me-2"></i>View Queue
+            </a>
+            {% if user.role == 'nurse' or user.role == 'admin' %}
+                <a href="{% url 'triage:nursing_list' %}" class="btn btn-outline-success">
+                    <i class="fas fa-user-nurse me-2"></i>Nursing Care
+                </a>
+            {% endif %}
+        </div>
     </div>
 
-    <div class="stats-grid">
-        <article class="stat-card"><span class="stat-icon tone-green"><i class="fas fa-heart-pulse"></i></span><div><p class="stat-label">Vitals Taken</p><p class="stat-value">31</p><p class="stat-change">+9 today</p></div><span class="sparkline"></span></article>
-        <article class="stat-card"><span class="stat-icon tone-red"><i class="fas fa-triangle-exclamation"></i></span><div><p class="stat-label">Emergency Cases</p><p class="stat-value">4</p><p class="stat-change">2 active</p></div><span class="sparkline"></span></article>
-        <article class="stat-card"><span class="stat-icon tone-blue"><i class="fas fa-user-doctor"></i></span><div><p class="stat-label">Sent to Doctor</p><p class="stat-value">22</p><p class="stat-change">+6 this shift</p></div><span class="sparkline"></span></article>
-        <article class="stat-card"><span class="stat-icon tone-amber"><i class="far fa-clock"></i></span><div><p class="stat-label">Queue Time</p><p class="stat-value">9m</p><p class="stat-change">Stable</p></div><span class="sparkline"></span></article>
+    <!-- Stats Cards -->
+    <div class="row g-4 mb-4">
+        <div class="col-md-3 col-sm-6">
+            <div class="stat-card waiting">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                        <div class="stat-number">{{ waiting_count }}</div>
+                        <div class="text-muted">Waiting for Triage</div>
+                        {% if waiting_count > 0 %}
+                            <span class="badge bg-warning">
+                                <i class="fas fa-circle text-danger me-1" style="font-size: 0.5rem;"></i>
+                                Waiting
+                            </span>
+                        {% endif %}
+                    </div>
+                    <div class="stat-icon">
+                        <i class="fas fa-clock"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 col-sm-6">
+            <div class="stat-card in-progress">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                        <div class="stat-number">{{ in_progress_count }}</div>
+                        <div class="text-muted">In Progress</div>
+                    </div>
+                    <div class="stat-icon">
+                        <i class="fas fa-spinner"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 col-sm-6">
+            <div class="stat-card nursing">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                        <div class="stat-number">{{ nursing_care_count }}</div>
+                        <div class="text-muted">Nursing Care</div>
+                        {% if nursing_care_count > 0 %}
+                            <span class="badge bg-success">
+                                <i class="fas fa-circle text-warning me-1" style="font-size: 0.5rem;"></i>
+                                Active
+                            </span>
+                        {% endif %}
+                    </div>
+                    <div class="stat-icon">
+                        <i class="fas fa-user-nurse"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 col-sm-6">
+            <div class="stat-card completed">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                        <div class="stat-number">{{ completed_today }}</div>
+                        <div class="text-muted">Completed Today</div>
+                        <div class="text-muted small">
+                            <i class="fas fa-arrow-right me-1"></i>
+                            {{ sent_to_doctor_today }} sent to doctor
+                        </div>
+                    </div>
+                    <div class="stat-icon">
+                        <i class="fas fa-check-circle"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 
-    <div class="role-grid">
-        <article class="role-card"><span class="stat-icon tone-green"><i class="fas fa-stethoscope"></i></span><h2>Take Vitals</h2><p>Record blood pressure, temperature, pulse, oxygen, and symptoms.</p><a href="#" class="btn btn-success">Start</a></article>
-        <article class="role-card"><span class="stat-icon tone-red"><i class="fas fa-kit-medical"></i></span><h2>Emergency Cases</h2><p>Prioritize high-risk patients and escalate urgent care immediately.</p><a href="#" class="btn btn-danger">View Cases</a></article>
-        <article class="role-card"><span class="stat-icon tone-blue"><i class="fas fa-user-doctor"></i></span><h2>Send to Doctor</h2><p>Route assessed patients with triage notes and priority level.</p><a href="#" class="btn btn-primary">Send</a></article>
+    <div class="row g-4">
+        <!-- Waiting Queue -->
+        <div class="col-lg-6">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-users me-2"></i>Waiting for Triage
+                        {% if waiting_count > 0 %}
+                            <span class="badge bg-warning ms-2">{{ waiting_count }}</span>
+                        {% endif %}
+                    </h5>
+                    <a href="{% url 'triage:queue' %}" class="btn btn-sm btn-link">View All</a>
+                </div>
+                <div class="card-body p-0">
+                    {% if waiting_patients %}
+                        <div class="list-group list-group-flush">
+                            {% for visit in waiting_patients %}
+                                <a href="{% url 'triage:triage_patient' visit.id %}" 
+                                   class="list-group-item list-group-item-action queue-item">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <div>
+                                            <strong>{{ visit.patient.full_name }}</strong>
+                                            <span class="badge bg-secondary ms-2">{{ visit.visit_number }}</span>
+                                            <div class="text-muted small">
+                                                <i class="fas fa-clock me-1"></i>
+                                                Arrived {{ visit.arrival_time|timesince }} ago
+                                            </div>
+                                        </div>
+                                        <div class="d-flex align-items-center gap-2">
+                                            <span class="badge bg-secondary priority-badge">
+                                                {{ visit.get_visit_type_display }}
+                                            </span>
+                                            <i class="fas fa-chevron-right text-muted"></i>
+                                        </div>
+                                    </div>
+                                </a>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <div class="empty-state">
+                            <i class="fas fa-check-circle"></i>
+                            <h5 class="text-muted">No Patients Waiting</h5>
+                            <p class="text-muted small">All patients have been triaged.</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- In Progress & Nursing Care -->
+        <div class="col-lg-6">
+            <!-- In Progress -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-spinner me-2"></i>In Progress
+                        {% if in_progress_count > 0 %}
+                            <span class="badge bg-primary ms-2">{{ in_progress_count }}</span>
+                        {% endif %}
+                    </h5>
+                </div>
+                <div class="card-body p-0">
+                    {% if in_progress %}
+                        <div class="list-group list-group-flush">
+                            {% for triage in in_progress %}
+                                <div class="list-group-item">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <div>
+                                            <strong>{{ triage.patient.full_name }}</strong>
+                                            <span class="badge bg-secondary ms-2">{{ triage.visit.visit_number }}</span>
+                                            <div class="text-muted small">
+                                                <i class="fas fa-clock me-1"></i>
+                                                Started {{ triage.created_at|timesince }} ago
+                                            </div>
+                                        </div>
+                                        <div>
+                                            <a href="{% url 'triage:triage_patient' triage.visit.id %}" 
+                                               class="btn btn-sm btn-primary">
+                                                <i class="fas fa-edit"></i> Continue
+                                            </a>
+                                        </div>
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <div class="p-3 text-center text-muted">
+                            <small>No patients in progress</small>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Nursing Care -->
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-user-nurse me-2"></i>Nursing Care
+                        {% if nursing_care_count > 0 %}
+                            <span class="badge bg-success ms-2">{{ nursing_care_count }}</span>
+                        {% endif %}
+                    </h5>
+                    <a href="{% url 'triage:nursing_list' %}" class="btn btn-sm btn-link">View All</a>
+                </div>
+                <div class="card-body p-0">
+                    {% if nursing_care %}
+                        <div class="list-group list-group-flush">
+                            {% for triage in nursing_care %}
+                                <div class="list-group-item">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <div>
+                                            <strong>{{ triage.patient.full_name }}</strong>
+                                            <span class="badge bg-secondary ms-2">{{ triage.visit.visit_number }}</span>
+                                            <div class="text-muted small">
+                                                <i class="fas fa-clock me-1"></i>
+                                                Waiting for care
+                                            </div>
+                                        </div>
+                                        <div>
+                                            {% if user.role == 'nurse' or user.role == 'admin' %}
+                                                <a href="{% url 'triage:nursing_care' triage.id %}" 
+                                                   class="btn btn-sm btn-success">
+                                                    <i class="fas fa-user-nurse"></i> Care
+                                                </a>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <div class="p-3 text-center text-muted">
+                            <small>No patients needing nursing care</small>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
     </div>
-</section>
+</div>
 {% endblock %}

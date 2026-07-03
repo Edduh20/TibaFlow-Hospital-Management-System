@@ -1,29 +1,267 @@
 {% extends 'base.html' %}
+{% load static %}
 
 {% block title %}Nurse Dashboard - TibaFlow HMS{% endblock %}
 
+{% block extra_css %}
+<style>
+    .stat-card {
+        background: white;
+        border-radius: 12px;
+        padding: 1.5rem;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        transition: all 0.3s ease;
+        border-left: 4px solid #0d6efd;
+        height: 100%;
+    }
+    .stat-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+    }
+    .stat-card .stat-icon {
+        font-size: 2rem;
+        opacity: 0.3;
+    }
+    .stat-card .stat-number {
+        font-size: 2rem;
+        font-weight: 700;
+    }
+    .stat-card.admitted { border-left-color: #dc3545; }
+    .stat-card.nursing { border-left-color: #ffc107; }
+    .stat-card.medications { border-left-color: #0d6efd; }
+    .stat-card.observations { border-left-color: #198754; }
+    
+    .patient-item {
+        transition: all 0.3s ease;
+    }
+    .patient-item:hover {
+        background: #f8f9fa;
+        transform: translateX(5px);
+    }
+    .empty-state {
+        padding: 3rem 1rem;
+        text-align: center;
+    }
+    .empty-state i {
+        font-size: 4rem;
+        color: #dee2e6;
+        margin-bottom: 1rem;
+    }
+    .days-of-stay {
+        font-weight: 600;
+        color: #0d6efd;
+    }
+</style>
+{% endblock %}
+
 {% block content %}
-<section class="dashboard-page">
-    <div class="dashboard-hero">
+<div class="container-fluid">
+    <!-- Page Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
         <div>
-            <p class="eyebrow">Nursing desk</p>
-            <h1>Nurse {% if user.full_name %}{{ user.full_name }}{% else %}{{ user.username }}{% endif %}</h1>
-            <p>Coordinate bedside care, medication rounds, and patient updates.</p>
+            <h1 class="h2 mb-1">
+                <i class="fas fa-user-nurse text-primary me-2"></i>Nurse Dashboard
+            </h1>
+            <p class="text-muted">Manage patient care and medications</p>
         </div>
-        <span class="date-pill"><i class="far fa-calendar-check"></i>{% now "F j, Y" %}</span>
+        <div>
+            <a href="{% url 'nurses:nursing_care_list' %}" class="btn btn-outline-primary">
+                <i class="fas fa-user-nurse me-2"></i>Nursing Care
+            </a>
+            <a href="{% url 'nurses:pending_medications' %}" class="btn btn-outline-success">
+                <i class="fas fa-pills me-2"></i>Medications
+            </a>
+        </div>
     </div>
 
-    <div class="stats-grid">
-        <article class="stat-card"><span class="stat-icon tone-blue"><i class="fas fa-bed"></i></span><div><p class="stat-label">Assigned Beds</p><p class="stat-value">16</p><p class="stat-change">3 discharges planned</p></div><span class="sparkline"></span></article>
-        <article class="stat-card"><span class="stat-icon tone-green"><i class="fas fa-pills"></i></span><div><p class="stat-label">Medication Rounds</p><p class="stat-value">27</p><p class="stat-change">8 remaining</p></div><span class="sparkline"></span></article>
-        <article class="stat-card"><span class="stat-icon tone-purple"><i class="fas fa-clipboard-check"></i></span><div><p class="stat-label">Care Notes</p><p class="stat-value">34</p><p class="stat-change">+11 today</p></div><span class="sparkline"></span></article>
-        <article class="stat-card"><span class="stat-icon tone-red"><i class="fas fa-bell"></i></span><div><p class="stat-label">Alerts</p><p class="stat-value">5</p><p class="stat-change">2 urgent</p></div><span class="sparkline"></span></article>
+    <!-- Stats Cards -->
+    <div class="row g-4 mb-4">
+        <div class="col-md-3 col-sm-6">
+            <div class="stat-card admitted">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                        <div class="stat-number">{{ admitted_count }}</div>
+                        <div class="text-muted">Admitted Patients</div>
+                    </div>
+                    <div class="stat-icon">
+                        <i class="fas fa-hospital-user"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 col-sm-6">
+            <div class="stat-card nursing">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                        <div class="stat-number">{{ nursing_care_count }}</div>
+                        <div class="text-muted">Nursing Care</div>
+                        {% if nursing_care_count > 0 %}
+                            <span class="badge bg-warning">
+                                <i class="fas fa-circle text-danger me-1" style="font-size: 0.5rem;"></i>
+                                Pending
+                            </span>
+                        {% endif %}
+                    </div>
+                    <div class="stat-icon">
+                        <i class="fas fa-user-nurse"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 col-sm-6">
+            <div class="stat-card medications">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                        <div class="stat-number">{{ pending_medications_count }}</div>
+                        <div class="text-muted">Pending Medications</div>
+                    </div>
+                    <div class="stat-icon">
+                        <i class="fas fa-pills"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 col-sm-6">
+            <div class="stat-card observations">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                        <div class="stat-number">{{ prescriptions_today }}</div>
+                        <div class="text-muted">Prescriptions Today</div>
+                    </div>
+                    <div class="stat-icon">
+                        <i class="fas fa-prescription"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 
-    <div class="role-grid">
-        <article class="role-card"><span class="stat-icon tone-blue"><i class="fas fa-bed-pulse"></i></span><h2>Patient Care</h2><p>Review assigned patients, care plans, and bedside observations.</p><a href="#" class="btn btn-primary">View</a></article>
-        <article class="role-card"><span class="stat-icon tone-green"><i class="fas fa-capsules"></i></span><h2>Medication Admin</h2><p>Track medication rounds and record administered doses.</p><a href="#" class="btn btn-success">Administer</a></article>
-        <article class="role-card"><span class="stat-icon tone-purple"><i class="fas fa-comment-medical"></i></span><h2>Patient Feedback</h2><p>Send observations and patient status updates to the doctor.</p><a href="#" class="btn btn-primary">Send</a></article>
+    <div class="row g-4">
+        <!-- Admitted Patients -->
+        <div class="col-lg-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-hospital-user me-2"></i>Admitted Patients
+                        {% if admitted_count > 0 %}
+                            <span class="badge bg-danger ms-2">{{ admitted_count }}</span>
+                        {% endif %}
+                    </h5>
+                </div>
+                <div class="card-body p-0">
+                    {% if admitted_patients %}
+                        <div class="list-group list-group-flush">
+                            {% for patient in admitted_patients %}
+                                <a href="{% url 'nurses:patient_detail' patient.id %}" 
+                                   class="list-group-item list-group-item-action patient-item">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <div>
+                                            <strong>{{ patient.full_name }}</strong>
+                                            <span class="badge bg-secondary ms-2">{{ patient.age }} yrs</span>
+                                            <div class="text-muted small">
+                                                <i class="fas fa-clock me-1"></i>
+                                                Day {{ patient.days_of_stay }} of stay
+                                            </div>
+                                        </div>
+                                        <div>
+                                            <span class="badge bg-info">
+                                                Room {{ patient.room_number|default:'N/A' }}
+                                            </span>
+                                            <i class="fas fa-chevron-right text-muted ms-2"></i>
+                                        </div>
+                                    </div>
+                                </a>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <div class="empty-state">
+                            <i class="fas fa-hospital-user"></i>
+                            <h5 class="text-muted">No Admitted Patients</h5>
+                            <p class="text-muted small">No patients are currently admitted.</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Nursing Care & Medications -->
+        <div class="col-lg-6">
+            <!-- Nursing Care -->
+            <div class="card mb-4">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-user-nurse me-2"></i>Nursing Care
+                        {% if nursing_care_count > 0 %}
+                            <span class="badge bg-warning ms-2">{{ nursing_care_count }}</span>
+                        {% endif %}
+                    </h5>
+                    <a href="{% url 'nurses:nursing_care_list' %}" class="btn btn-sm btn-link">View All</a>
+                </div>
+                <div class="card-body p-0">
+                    {% if nursing_care_patients %}
+                        <div class="list-group list-group-flush">
+                            {% for triage in nursing_care_patients %}
+                                <a href="{% url 'nurses:patient_detail' triage.patient.id %}" 
+                                   class="list-group-item list-group-item-action patient-item">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <div>
+                                            <strong>{{ triage.patient.full_name }}</strong>
+                                            <span class="badge bg-secondary ms-2">{{ triage.patient.age }} yrs</span>
+                                            <div class="text-muted small">
+                                                <i class="fas fa-clock me-1"></i>
+                                                Priority: {{ triage.get_priority_display }}
+                                            </div>
+                                        </div>
+                                        <i class="fas fa-chevron-right text-muted"></i>
+                                    </div>
+                                </a>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <div class="p-3 text-center text-muted">
+                            <small>No patients needing nursing care</small>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Recent Observations -->
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-notes-medical me-2"></i>Recent Observations
+                    </h5>
+                </div>
+                <div class="card-body p-0">
+                    {% if recent_observations %}
+                        <div class="list-group list-group-flush">
+                            {% for observation in recent_observations %}
+                                <div class="list-group-item">
+                                    <div class="d-flex justify-content-between align-items-start">
+                                        <div>
+                                            <strong>{{ observation.patient.full_name }}</strong>
+                                            <span class="badge bg-{% if observation.is_urgent %}danger{% else %}secondary{% endif %} ms-2">
+                                                {{ observation.get_observation_type_display }}
+                                            </span>
+                                            <div class="text-muted small">
+                                                {{ observation.description|truncatechars:50 }}
+                                            </div>
+                                        </div>
+                                        <small class="text-muted">
+                                            {{ observation.created_at|timesince }} ago
+                                        </small>
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <div class="p-3 text-center text-muted">
+                            <small>No recent observations</small>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
     </div>
-</section>
+</div>
 {% endblock %}

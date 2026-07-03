@@ -1,0 +1,99 @@
+{% extends 'base.html' %}
+{% load crispy_forms_tags %}
+
+{% block title %}Perform Imaging Test - TibaFlow HMS{% endblock %}
+
+{% block extra_css %}
+<style>
+    .test-summary {
+        background: #f8f9fa;
+        border-radius: 10px;
+        padding: 1rem;
+        margin-bottom: 1.5rem;
+    }
+    .test-summary .label {
+        color: #6c757d;
+        font-size: 0.8rem;
+        font-weight: 600;
+    }
+    .test-summary .value {
+        font-weight: 500;
+        font-size: 1.1rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="h2 mb-1">
+                <i class="fas fa-x-ray text-primary me-2"></i>Perform Imaging Test
+            </h1>
+            <p class="text-muted">Complete the imaging test and submit results</p>
+        </div>
+        <div>
+            <a href="{% url 'laboratory:dashboard' %}" class="btn btn-secondary">
+                <i class="fas fa-arrow-left me-1"></i>Back to Dashboard
+            </a>
+        </div>
+    </div>
+
+    <!-- Test Summary -->
+    <div class="test-summary">
+        <div class="row">
+            <div class="col-md-3">
+                <div class="label">Patient Name</div>
+                <div class="value">{{ patient.full_name }}</div>
+            </div>
+            <div class="col-md-2">
+                <div class="label">Age</div>
+                <div class="value">{{ patient.age }} years</div>
+            </div>
+            <div class="col-md-3">
+                <div class="label">Imaging Type</div>
+                <div class="value">{{ imaging_order.get_imaging_type_display }}</div>
+            </div>
+            <div class="col-md-2">
+                <div class="label">Body Part</div>
+                <div class="value">{{ imaging_order.body_part }}</div>
+            </div>
+            <div class="col-md-2">
+                <div class="label">Priority</div>
+                <div class="value">
+                    <span class="badge bg-{% if imaging_order.priority == 'emergency' %}danger{% elif imaging_order.priority == 'urgent' %}warning{% else %}secondary{% endif %}">
+                        {{ imaging_order.get_priority_display }}
+                    </span>
+                </div>
+            </div>
+        </div>
+        {% if imaging_order.clinical_indication %}
+            <div class="row mt-2">
+                <div class="col-12">
+                    <div class="label">Clinical Indication</div>
+                    <div class="value">{{ imaging_order.clinical_indication }}</div>
+                </div>
+            </div>
+        {% endif %}
+    </div>
+
+    <form method="post" enctype="multipart/form-data">
+        {% csrf_token %}
+        {{ form|crispy }}
+        
+        <div class="d-flex flex-wrap justify-content-between mt-3 gap-2">
+            <a href="{% url 'laboratory:dashboard' %}" class="btn btn-secondary">
+                <i class="fas fa-times me-1"></i>Cancel
+            </a>
+            <div>
+                <a href="{% url 'laboratory:request_clarification_imaging' imaging_result.id %}" class="btn btn-warning me-2">
+                    <i class="fas fa-question-circle me-1"></i>Request Clarification
+                </a>
+                <button type="submit" class="btn btn-success">
+                    <i class="fas fa-check me-1"></i>Submit Results
+                </button>
+            </div>
+        </div>
+    </form>
+</div>
+{% endblock %}

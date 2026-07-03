@@ -1,0 +1,333 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ patient.full_name }} - Nurse View{% endblock %}
+
+{% block extra_css %}
+<style>
+    .patient-header {
+        background: linear-gradient(135deg, #f8f9fa, #e9ecef);
+        border-radius: 12px;
+        padding: 1.5rem;
+    }
+    .info-card {
+        background: white;
+        border-radius: 10px;
+        padding: 1rem;
+        margin-bottom: 0.5rem;
+        border: 1px solid rgba(0,0,0,0.05);
+    }
+    .info-card .label {
+        color: #6c757d;
+        font-size: 0.8rem;
+        font-weight: 600;
+    }
+    .info-card .value {
+        font-weight: 500;
+    }
+    .days-of-stay {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: #0d6efd;
+    }
+    .nav-tabs .nav-link {
+        color: #495057;
+        font-weight: 500;
+    }
+    .nav-tabs .nav-link.active {
+        color: #0d6efd;
+        border-bottom: 3px solid #0d6efd;
+    }
+    .tab-content {
+        padding: 1.5rem 0;
+    }
+    .record-item {
+        transition: all 0.3s ease;
+    }
+    .record-item:hover {
+        background: #f8f9fa;
+    }
+    .access-notice {
+        background: #e8f0fe;
+        border: 1px solid #0d6efd;
+        border-radius: 8px;
+        padding: 0.75rem 1rem;
+        color: #0d6efd;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Patient Header -->
+    <div class="patient-header mb-4">
+        <div class="row align-items-center">
+            <div class="col-md-7">
+                <h2 class="h3 mb-1">
+                    <i class="fas fa-user-injured text-primary me-2"></i>
+                    {{ patient.full_name }}
+                </h2>
+                <div class="d-flex flex-wrap gap-3">
+                    <span class="text-muted">
+                        <i class="fas fa-calendar-alt me-1"></i>
+                        Age: {{ patient.age }} years
+                    </span>
+                    <span class="text-muted">
+                        <i class="fas fa-venus-mars me-1"></i>
+                        {{ patient.get_gender_display }}
+                    </span>
+                    <span class="badge bg-{% if patient.is_admitted %}danger{% else %}success{% endif %}">
+                        {% if patient.is_admitted %}Admitted{% else %}Outpatient{% endif %}
+                    </span>
+                    {% if patient.is_admitted %}
+                        <span class="badge bg-primary">
+                            <i class="fas fa-clock me-1"></i>
+                            Day {{ patient.days_of_stay }} of stay
+                        </span>
+                    {% endif %}
+                </div>
+            </div>
+            <div class="col-md-5 text-md-end mt-3 mt-md-0">
+                <div class="d-flex flex-wrap justify-content-md-end gap-2">
+                    <a href="{% url 'nurses:add_note' patient.id %}" class="btn btn-primary btn-sm">
+                        <i class="fas fa-plus me-1"></i>Add Note
+                    </a>
+                    <a href="{% url 'nurses:add_observation' patient.id %}" class="btn btn-info btn-sm">
+                        <i class="fas fa-eye me-1"></i>Add Observation
+                    </a>
+                    <a href="{% url 'nurses:dashboard' %}" class="btn btn-secondary btn-sm">
+                        <i class="fas fa-arrow-left me-1"></i>Back
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Access Notice -->
+    <div class="access-notice mb-4">
+        <i class="fas fa-info-circle me-2"></i>
+        <strong>Limited Access:</strong> You can view patient name, age, prescriptions, and days of stay.
+    </div>
+
+    <div class="row g-4">
+        <!-- Patient Info -->
+        <div class="col-lg-4">
+            <div class="card">
+                <div class="card-header">
+                    <h6 class="mb-0">
+                        <i class="fas fa-info-circle text-primary me-2"></i>Patient Information
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="info-card">
+                        <div class="label">Full Name</div>
+                        <div class="value">{{ patient.full_name }}</div>
+                    </div>
+                    <div class="info-card">
+                        <div class="label">Age</div>
+                        <div class="value">{{ patient.age }} years</div>
+                    </div>
+                    <div class="info-card">
+                        <div class="label">Gender</div>
+                        <div class="value">{{ patient.get_gender_display }}</div>
+                    </div>
+                    <div class="info-card">
+                        <div class="label">Phone</div>
+                        <div class="value">{{ patient.phone_number }}</div>
+                    </div>
+                    {% if patient.is_admitted %}
+                        <div class="info-card">
+                            <div class="label">Days of Stay</div>
+                            <div class="value days-of-stay">{{ patient.days_of_stay }} days</div>
+                        </div>
+                        <div class="info-card">
+                            <div class="label">Room</div>
+                            <div class="value">{{ patient.room_number|default:'Not assigned' }}</div>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Quick Actions -->
+            <div class="card mt-4">
+                <div class="card-header">
+                    <h6 class="mb-0">
+                        <i class="fas fa-bolt text-primary me-2"></i>Quick Actions
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="d-grid gap-2">
+                        <a href="{% url 'nurses:add_note' patient.id %}" class="btn btn-primary">
+                            <i class="fas fa-plus me-1"></i>Add Note
+                        </a>
+                        <a href="{% url 'nurses:add_observation' patient.id %}" class="btn btn-info">
+                            <i class="fas fa-eye me-1"></i>Add Observation
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Patient Data -->
+        <div class="col-lg-8">
+            <!-- Tabs -->
+            <ul class="nav nav-tabs" id="nurseTabs" role="tablist">
+                <li class="nav-item">
+                    <a class="nav-link active" id="prescriptions-tab" data-bs-toggle="tab" href="#prescriptions" role="tab">
+                        <i class="fas fa-prescription me-1"></i>Prescriptions
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" id="notes-tab" data-bs-toggle="tab" href="#notes" role="tab">
+                        <i class="fas fa-notes-medical me-1"></i>Nurse Notes
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" id="doctor-notes-tab" data-bs-toggle="tab" href="#doctor-notes" role="tab">
+                        <i class="fas fa-stethoscope me-1"></i>Doctor's Notes
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" id="observations-tab" data-bs-toggle="tab" href="#observations" role="tab">
+                        <i class="fas fa-eye me-1"></i>Observations
+                    </a>
+                </li>
+            </ul>
+
+            <div class="tab-content" id="nurseTabsContent">
+                <!-- Prescriptions Tab -->
+                <div class="tab-pane fade show active" id="prescriptions" role="tabpanel">
+                    {% if prescriptions %}
+                        <div class="list-group">
+                            {% for prescription in prescriptions %}
+                                <div class="list-group-item record-item">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <div>
+                                            <strong>{{ prescription.medication_name }}</strong>
+                                            <span class="text-muted ms-2">{{ prescription.dosage }}</span>
+                                            <div class="text-muted small">
+                                                {{ prescription.frequency }} - {{ prescription.duration }}
+                                            </div>
+                                        </div>
+                                        <span class="badge bg-{% if prescription.status == 'dispensed' %}success{% elif prescription.status == 'pending' %}warning{% else %}secondary{% endif %}">
+                                            {{ prescription.get_status_display }}
+                                        </span>
+                                    </div>
+                                    <div class="mt-2">
+                                        <a href="{% url 'nurses:administer_medication' patient.id prescription.id %}" 
+                                           class="btn btn-sm btn-success">
+                                            <i class="fas fa-syringe me-1"></i>Administer
+                                        </a>
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <div class="text-center py-4">
+                            <i class="fas fa-prescription fa-2x text-muted mb-2 d-block"></i>
+                            <p class="text-muted">No prescriptions found.</p>
+                        </div>
+                    {% endif %}
+                </div>
+
+                <!-- Nurse Notes Tab -->
+                <div class="tab-pane fade" id="notes" role="tabpanel">
+                    {% if nurse_notes %}
+                        <div class="list-group">
+                            {% for note in nurse_notes %}
+                                <div class="list-group-item">
+                                    <div class="d-flex justify-content-between">
+                                        <div>
+                                            <strong>{{ note.created_by.get_full_name|default:note.created_by.username }}</strong>
+                                            {% if note.is_feedback %}
+                                                <span class="badge bg-warning">Feedback</span>
+                                            {% endif %}
+                                            <div class="text-muted small">
+                                                {{ note.note }}
+                                            </div>
+                                        </div>
+                                        <small class="text-muted">
+                                            {{ note.created_at|date:"M d, Y H:i" }}
+                                        </small>
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <div class="text-center py-4">
+                            <i class="fas fa-notes-medical fa-2x text-muted mb-2 d-block"></i>
+                            <p class="text-muted">No nurse notes found.</p>
+                        </div>
+                    {% endif %}
+                </div>
+
+                <!-- Doctor's Notes Tab -->
+                <div class="tab-pane fade" id="doctor-notes" role="tabpanel">
+                    {% if medical_records %}
+                        <div class="list-group">
+                            {% for record in medical_records %}
+                                <div class="list-group-item">
+                                    <div class="d-flex justify-content-between">
+                                        <div>
+                                            <strong>Dr. {{ record.doctor.get_full_name|default:record.doctor.username }}</strong>
+                                            <div class="text-muted small">
+                                                <strong>Diagnosis:</strong> {{ record.diagnosis|default:'No diagnosis' }}
+                                            </div>
+                                            <div class="text-muted small">
+                                                {{ record.clinical_notes|truncatechars:100|default:'No clinical notes' }}
+                                            </div>
+                                        </div>
+                                        <small class="text-muted">
+                                            {{ record.created_at|date:"M d, Y" }}
+                                        </small>
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <div class="text-center py-4">
+                            <i class="fas fa-stethoscope fa-2x text-muted mb-2 d-block"></i>
+                            <p class="text-muted">No doctor's notes found.</p>
+                        </div>
+                    {% endif %}
+                </div>
+
+                <!-- Observations Tab -->
+                <div class="tab-pane fade" id="observations" role="tabpanel">
+                    {% if medication_administrations %}
+                        <div class="list-group">
+                            {% for admin in medication_administrations %}
+                                <div class="list-group-item">
+                                    <div class="d-flex justify-content-between">
+                                        <div>
+                                            <strong>{{ admin.prescription.medication_name }}</strong>
+                                            <span class="badge bg-{% if admin.status == 'administered' %}success{% elif admin.status == 'pending' %}warning{% else %}secondary{% endif %} ms-2">
+                                                {{ admin.get_status_display }}
+                                            </span>
+                                            <div class="text-muted small">
+                                                {{ admin.notes|default:'No notes' }}
+                                            </div>
+                                        </div>
+                                        <small class="text-muted">
+                                            {% if admin.administered_at %}
+                                                {{ admin.administered_at|date:"M d, Y H:i" }}
+                                            {% else %}
+                                                Pending
+                                            {% endif %}
+                                        </small>
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <div class="text-center py-4">
+                            <i class="fas fa-syringe fa-2x text-muted mb-2 d-block"></i>
+                            <p class="text-muted">No medication administrations found.</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
