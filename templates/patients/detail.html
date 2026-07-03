@@ -1,0 +1,410 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ patient.full_name }} - Patient Details{% endblock %}
+
+{% block extra_css %}
+<style>
+    .patient-header {
+        background: linear-gradient(135deg, #f8f9fa, #e9ecef);
+        border-radius: 12px;
+        padding: 1.5rem;
+    }
+    .info-card {
+        background: white;
+        border-radius: 10px;
+        padding: 1rem;
+        margin-bottom: 0.5rem;
+        border: 1px solid rgba(0,0,0,0.05);
+    }
+    .info-card .label {
+        color: #6c757d;
+        font-size: 0.8rem;
+        font-weight: 600;
+    }
+    .info-card .value {
+        font-weight: 500;
+    }
+    .nav-tabs .nav-link {
+        color: #495057;
+        font-weight: 500;
+    }
+    .nav-tabs .nav-link.active {
+        color: #0d6efd;
+        border-bottom: 3px solid #0d6efd;
+    }
+    .tab-content {
+        padding: 1.5rem 0;
+    }
+    .record-item {
+        transition: all 0.3s ease;
+    }
+    .record-item:hover {
+        background: #f8f9fa;
+    }
+    .access-warning {
+        background: #fff3cd;
+        border: 1px solid #ffc107;
+        border-radius: 8px;
+        padding: 0.75rem 1rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Patient Header -->
+    <div class="patient-header mb-4">
+        <div class="row align-items-center">
+            <div class="col-md-7">
+                <h2 class="h3 mb-1">
+                    <i class="fas fa-user-injured text-primary me-2"></i>
+                    {{ patient.full_name }}
+                </h2>
+                <div class="d-flex flex-wrap gap-3">
+                    <span class="text-muted">
+                        <i class="fas fa-calendar-alt me-1"></i>
+                        Age: {{ patient.age }} years
+                    </span>
+                    <span class="text-muted">
+                        <i class="fas fa-venus-mars me-1"></i>
+                        {{ patient.get_gender_display }}
+                    </span>
+                    <span class="text-muted">
+                        <i class="fas fa-tint me-1"></i>
+                        Blood: {{ patient.blood_type|default:'Not recorded' }}
+                    </span>
+                    <span class="text-muted">
+                        <i class="fas fa-phone me-1"></i>
+                        {{ patient.phone_number }}
+                    </span>
+                    <span class="badge bg-{% if patient.is_admitted %}danger{% elif patient.status == 'discharged' %}secondary{% else %}success{% endif %}">
+                        {{ patient.display_status }}
+                    </span>
+                </div>
+            </div>
+            <div class="col-md-5 text-md-end mt-3 mt-md-0">
+                <div class="d-flex flex-wrap justify-content-md-end gap-2">
+                    {% if user.role in 'reception,admin' %}
+                        <a href="{% url 'patients:edit' patient.id %}" class="btn btn-primary btn-sm">
+                            <i class="fas fa-edit me-1"></i>Edit
+                        </a>
+                        <a href="{% url 'patients:delete' patient.id %}" class="btn btn-danger btn-sm">
+                            <i class="fas fa-trash me-1"></i>Delete
+                        </a>
+                    {% endif %}
+                    {% if user.role in 'reception,admin,doctor' %}
+                        {% if not patient.is_admitted %}
+                            <a href="{% url 'patients:admit' patient.id %}" class="btn btn-success btn-sm">
+                                <i class="fas fa-hospital-user me-1"></i>Admit
+                            </a>
+                        {% else %}
+                            <a href="{% url 'patients:discharge' patient.id %}" class="btn btn-warning btn-sm">
+                                <i class="fas fa-door-open me-1"></i>Discharge
+                            </a>
+                        {% endif %}
+                    {% endif %}
+                    <a href="{% url 'patients:list' %}" class="btn btn-secondary btn-sm">
+                        <i class="fas fa-arrow-left me-1"></i>Back
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Access Level Warning -->
+    {% if access_level == 'triage' %}
+        <div class="access-warning mb-4">
+            <i class="fas fa-eye-slash me-2"></i>
+            <strong>Limited Access:</strong> You can only view patient name, age, and visit information.
+        </div>
+    {% elif access_level == 'nurse' %}
+        <div class="access-warning mb-4">
+            <i class="fas fa-eye-slash me-2"></i>
+            <strong>Limited Access:</strong> You can only view patient name, age, prescriptions, and days of stay.
+        </div>
+    {% endif %}
+
+    <!-- Tabs -->
+    <ul class="nav nav-tabs" id="patientTabs" role="tablist">
+        <li class="nav-item">
+            <a class="nav-link active" id="info-tab" data-bs-toggle="tab" href="#info" role="tab">
+                <i class="fas fa-user me-1"></i>Personal Info
+            </a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link" id="medical-tab" data-bs-toggle="tab" href="#medical" role="tab">
+                <i class="fas fa-heartbeat me-1"></i>Medical
+            </a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link" id="visits-tab" data-bs-toggle="tab" href="#visits" role="tab">
+                <i class="fas fa-calendar-check me-1"></i>Visits
+            </a>
+        </li>
+        {% if access_level == 'full' or access_level == 'doctor' %}
+            <li class="nav-item">
+                <a class="nav-link" id="records-tab" data-bs-toggle="tab" href="#records" role="tab">
+                    <i class="fas fa-notes-medical me-1"></i>Records
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" id="prescriptions-tab" data-bs-toggle="tab" href="#prescriptions" role="tab">
+                    <i class="fas fa-prescription me-1"></i>Prescriptions
+                </a>
+            </li>
+        {% endif %}
+        {% if access_level == 'full' %}
+            <li class="nav-item">
+                <a class="nav-link" id="payments-tab" data-bs-toggle="tab" href="#payments" role="tab">
+                    <i class="fas fa-money-bill me-1"></i>Payments
+                </a>
+            </li>
+        {% endif %}
+    </ul>
+
+    <div class="tab-content" id="patientTabsContent">
+        <!-- Personal Info Tab -->
+        <div class="tab-pane fade show active" id="info" role="tabpanel">
+            <div class="row">
+                <div class="col-md-6">
+                    <h6 class="fw-bold mb-3">Personal Information</h6>
+                    <div class="info-card">
+                        <div class="label">Full Name</div>
+                        <div class="value">{{ patient.full_name }}</div>
+                    </div>
+                    <div class="info-card">
+                        <div class="label">Date of Birth</div>
+                        <div class="value">{{ patient.date_of_birth|date:"M d, Y" }}</div>
+                    </div>
+                    <div class="info-card">
+                        <div class="label">Age</div>
+                        <div class="value">{{ patient.age }} years</div>
+                    </div>
+                    <div class="info-card">
+                        <div class="label">Gender</div>
+                        <div class="value">{{ patient.get_gender_display }}</div>
+                    </div>
+                    <div class="info-card">
+                        <div class="label">Blood Type</div>
+                        <div class="value">{{ patient.blood_type|default:'Not recorded' }}</div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <h6 class="fw-bold mb-3">Contact Information</h6>
+                    <div class="info-card">
+                        <div class="label">Phone</div>
+                        <div class="value">{{ patient.phone_number }}</div>
+                    </div>
+                    <div class="info-card">
+                        <div class="label">Email</div>
+                        <div class="value">{{ patient.email|default:'Not provided' }}</div>
+                    </div>
+                    <div class="info-card">
+                        <div class="label">Address</div>
+                        <div class="value">{{ patient.address|default:'Not provided' }}</div>
+                    </div>
+                    <div class="info-card">
+                        <div class="label">Emergency Contact</div>
+                        <div class="value">{{ patient.emergency_contact_name }} ({{ patient.emergency_contact_phone }})</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Medical Tab -->
+        <div class="tab-pane fade" id="medical" role="tabpanel">
+            {% if access_level == 'triage' or access_level == 'nurse' %}
+                <div class="alert alert-warning">
+                    <i class="fas fa-lock me-2"></i>
+                    <strong>Access Restricted:</strong> Medical history is not available for your role.
+                </div>
+            {% else %}
+                <div class="row">
+                    <div class="col-md-6">
+                        <h6 class="fw-bold mb-3">Medical History</h6>
+                        <div class="info-card">
+                            <div class="label">Allergies</div>
+                            <div class="value">{{ patient.allergies|default:'None reported' }}</div>
+                        </div>
+                        <div class="info-card">
+                            <div class="label">Chronic Conditions</div>
+                            <div class="value">{{ patient.chronic_conditions|default:'None reported' }}</div>
+                        </div>
+                        <div class="info-card">
+                            <div class="label">Previous Surgeries</div>
+                            <div class="value">{{ patient.previous_surgeries|default:'None reported' }}</div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <h6 class="fw-bold mb-3">Current Status</h6>
+                        <div class="info-card">
+                            <div class="label">Current Medications</div>
+                            <div class="value">{{ patient.current_medications|default:'None reported' }}</div>
+                        </div>
+                        <div class="info-card">
+                            <div class="label">Family Medical History</div>
+                            <div class="value">{{ patient.family_medical_history|default:'None reported' }}</div>
+                        </div>
+                        <div class="info-card">
+                            <div class="label">Additional Notes</div>
+                            <div class="value">{{ patient.medical_history_notes|default:'No additional notes' }}</div>
+                        </div>
+                    </div>
+                </div>
+            {% endif %}
+        </div>
+
+        <!-- Visits Tab -->
+        <div class="tab-pane fade" id="visits" role="tabpanel">
+            {% if visits %}
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Visit #</th>
+                                <th>Type</th>
+                                <th>Date</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for visit in visits %}
+                                <tr>
+                                    <td><strong>{{ visit.visit_number }}</strong></td>
+                                    <td>{{ visit.get_visit_type_display }}</td>
+                                    <td>{{ visit.arrival_time|date:"M d, Y H:i" }}</td>
+                                    <td>
+                                        <span class="badge bg-{% if visit.status == 'completed' %}success{% elif visit.status == 'with_doctor' %}primary{% elif visit.status == 'triage' %}warning{% elif visit.status == 'lab' %}info{% else %}secondary{% endif %}">
+                                            {{ visit.get_status_display }}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <a href="#" class="btn btn-sm btn-outline-primary">
+                                            <i class="fas fa-eye"></i>
+                                        </a>
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% else %}
+                <div class="text-center py-4">
+                    <i class="fas fa-calendar-check fa-2x text-muted mb-2 d-block"></i>
+                    <p class="text-muted">No visits recorded.</p>
+                </div>
+            {% endif %}
+        </div>
+
+        <!-- Medical Records Tab -->
+        {% if access_level == 'full' or access_level == 'doctor' %}
+            <div class="tab-pane fade" id="records" role="tabpanel">
+                {% if medical_records %}
+                    <div class="list-group">
+                        {% for record in medical_records %}
+                            <div class="list-group-item record-item">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <strong>Visit: {{ record.visit.visit_number }}</strong>
+                                        <div class="text-muted small">
+                                            {{ record.diagnosis|truncatechars:100|default:'No diagnosis' }}
+                                        </div>
+                                        <small class="text-muted">
+                                            <i class="far fa-clock me-1"></i>
+                                            {{ record.created_at|date:"M d, Y" }}
+                                        </small>
+                                    </div>
+                                    <span class="badge bg-{% if record.is_completed %}success{% else %}warning{% endif %}">
+                                        {% if record.is_completed %}Completed{% else %}In Progress{% endif %}
+                                    </span>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <div class="text-center py-4">
+                        <i class="fas fa-notes-medical fa-2x text-muted mb-2 d-block"></i>
+                        <p class="text-muted">No medical records found.</p>
+                    </div>
+                {% endif %}
+            </div>
+
+            <!-- Prescriptions Tab -->
+            <div class="tab-pane fade" id="prescriptions" role="tabpanel">
+                {% if prescriptions %}
+                    <div class="list-group">
+                        {% for prescription in prescriptions %}
+                            <div class="list-group-item record-item">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <strong>{{ prescription.medication_name }}</strong>
+                                        <span class="text-muted ms-2">{{ prescription.dosage }}</span>
+                                        <div class="text-muted small">
+                                            {{ prescription.frequency }} - {{ prescription.duration }}
+                                        </div>
+                                        <small class="text-muted">
+                                            <i class="far fa-clock me-1"></i>
+                                            {{ prescription.created_at|date:"M d, Y" }}
+                                        </small>
+                                    </div>
+                                    <span class="badge bg-{% if prescription.status == 'dispensed' %}success{% elif prescription.status == 'pending' %}warning{% else %}secondary{% endif %}">
+                                        {{ prescription.get_status_display }}
+                                    </span>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <div class="text-center py-4">
+                        <i class="fas fa-prescription fa-2x text-muted mb-2 d-block"></i>
+                        <p class="text-muted">No prescriptions found.</p>
+                    </div>
+                {% endif %}
+            </div>
+        {% endif %}
+
+        <!-- Payments Tab -->
+        {% if access_level == 'full' %}
+            <div class="tab-pane fade" id="payments" role="tabpanel">
+                {% if payments %}
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Receipt #</th>
+                                    <th>Amount</th>
+                                    <th>Method</th>
+                                    <th>Status</th>
+                                    <th>Date</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for payment in payments %}
+                                    <tr>
+                                        <td>{{ payment.receipt_number|default:'N/A' }}</td>
+                                        <td>${{ payment.amount }}</td>
+                                        <td>{{ payment.get_payment_method_display }}</td>
+                                        <td>
+                                            <span class="badge bg-{% if payment.payment_status == 'completed' %}success{% elif payment.payment_status == 'pending' %}warning{% else %}danger{% endif %}">
+                                                {{ payment.get_payment_status_display }}
+                                            </span>
+                                        </td>
+                                        <td>{{ payment.payment_date|date:"M d, Y" }}</td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% else %}
+                    <div class="text-center py-4">
+                        <i class="fas fa-money-bill fa-2x text-muted mb-2 d-block"></i>
+                        <p class="text-muted">No payment records found.</p>
+                    </div>
+                {% endif %}
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

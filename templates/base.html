@@ -3,134 +3,405 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %}TibaFlow HMS{% endblock %}</title>
+    <meta name="description" content="TibaFlow HMS - Smart Hospital Management System">
+    <title>{% block title %}TibaFlow HMS - Smart Hospital Management{% endblock %}</title>
 
+    <!-- Bootstrap 5 -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    
+    <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
 
+    <!-- Custom CSS -->
     {% load static %}
     <link rel="stylesheet" href="{% static 'css/style.css' %}">
     {% block extra_css %}{% endblock %}
 </head>
 <body>
-    <header class="app-topbar">
-        <a class="brand" href="{% url 'core:home' %}" aria-label="TibaFlow HMS home">
-            <span class="brand-mark"><i class="fas fa-hospital"></i></span>
-            <span>TibaFlow HMS</span>
-        </a>
-
-        <form class="top-search" role="search">
-            <i class="fas fa-search"></i>
-            <input type="search" placeholder="Search patients, appointments, doctors..." aria-label="Search">
-        </form>
-
-        <div class="top-actions">
-            {% if user.is_authenticated %}
-                <button class="icon-btn" type="button" aria-label="Notifications">
-                    <i class="far fa-bell"></i>
-                    <span class="notification-dot">4</span>
-                </button>
-                <button class="icon-btn" type="button" aria-label="Calendar">
-                    <i class="far fa-calendar-check"></i>
-                </button>
-                <a class="icon-btn" href="{% url 'accounts:profile' %}" aria-label="Profile settings">
-                    <i class="fas fa-gear"></i>
+    <!-- ============================================ -->
+    <!-- HEADER / TOP NAVIGATION -->
+    <!-- ============================================ -->
+    <header class="app-header">
+        <div class="header-container">
+            <!-- Left: Brand -->
+            <div class="header-brand">
+                <a href="{% url 'core:home' %}" class="brand-link">
+                    <span class="brand-icon"><i class="fas fa-heartbeat"></i></span>
+                    <span class="brand-text">TibaFlow HMS</span>
                 </a>
-                <div class="user-menu dropdown">
-                    <button class="user-trigger" type="button" data-bs-toggle="dropdown" aria-expanded="false">
-                        <span class="avatar">{{ user.username|first|upper }}</span>
-                        <span class="user-copy">
-                            <strong>{% if user.full_name %}{{ user.full_name }}{% else %}{{ user.username }}{% endif %}</strong>
-                            <small>{{ user.get_role_display|default:user.role }}</small>
-                        </span>
-                        <i class="fas fa-chevron-down"></i>
+            </div>
+
+            <!-- Center: Navigation -->
+            <nav class="header-nav d-none d-lg-flex">
+                {% if user.is_authenticated %}
+                    <a href="{% url 'core:dashboard' %}" class="nav-link active">Dashboard</a>
+                {% endif %}
+            </nav>
+
+            <!-- Right: Profile / Actions -->
+            <div class="header-actions">
+                {% if user.is_authenticated %}
+                    <!-- Notification Bell -->
+                    <button class="action-btn notification-btn" type="button" aria-label="Notifications">
+                        <i class="fas fa-bell"></i>
+                        <span class="notification-badge">3</span>
                     </button>
-                    <ul class="dropdown-menu dropdown-menu-end">
-                        <li><a class="dropdown-item" href="{% url 'accounts:profile' %}"><i class="fas fa-user-cog"></i> Profile</a></li>
-                        <li>
-                            <form method="post" action="{% url 'accounts:logout' %}">
-                                {% csrf_token %}
-                                <button class="dropdown-item" type="submit"><i class="fas fa-sign-out-alt"></i> Logout</button>
-                            </form>
-                        </li>
-                    </ul>
-                </div>
-            {% else %}
-                <a class="btn btn-light btn-sm" href="{% url 'accounts:login' %}">Login</a>
-            {% endif %}
+
+                    <!-- Quick Add -->
+                    <div class="dropdown d-none d-md-block">
+                        <button class="action-btn" type="button" data-bs-toggle="dropdown" aria-label="Quick actions">
+                            <i class="fas fa-plus-circle"></i>
+                        </button>
+                        <ul class="dropdown-menu dropdown-menu-end shadow-sm">
+                            <li><a class="dropdown-item" href="{% url 'patients:create' %}"><i class="fas fa-user-plus me-2"></i>New Patient</a></li>
+                            <li><a class="dropdown-item" href="#"><i class="fas fa-calendar-plus me-2"></i>New Appointment</a></li>
+                            <li><a class="dropdown-item" href="#"><i class="fas fa-prescription me-2"></i>New Prescription</a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item" href="#"><i class="fas fa-user-md me-2"></i>New Staff</a></li>
+                        </ul>
+                    </div>
+
+                    <!-- User Profile Dropdown -->
+                    <div class="profile-dropdown dropdown">
+                        <button class="profile-trigger" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                            <div class="avatar-wrapper">
+                                {% if user.profile_picture %}
+                                    <img src="{{ user.profile_picture.url }}" alt="{{ user.username }}" class="avatar-img">
+                                {% else %}
+                                    <span class="avatar-text">
+                                        {% if user.first_name %}
+                                            {{ user.first_name|first }}{{ user.last_name|first }}
+                                        {% else %}
+                                            {{ user.username|first|upper }}
+                                        {% endif %}
+                                    </span>
+                                {% endif %}
+                            </div>
+                            <div class="profile-info d-none d-lg-block">
+                                <span class="profile-name">{{ user.get_full_name|default:user.username }}</span>
+                                <span class="profile-role">{{ user.get_role_display|default:user.role|title }}</span>
+                            </div>
+                            <i class="fas fa-chevron-down profile-chevron d-none d-lg-inline"></i>
+                        </button>
+                        <ul class="dropdown-menu dropdown-menu-end shadow-lg">
+                            <li>
+                                <div class="dropdown-item profile-header-item">
+                                    <div class="d-flex align-items-center">
+                                        <div class="avatar-wrapper me-3" style="width: 48px; height: 48px;">
+                                            <span class="avatar-text" style="font-size: 1.2rem;">
+                                                {{ user.username|first|upper }}
+                                            </span>
+                                        </div>
+                                        <div>
+                                            <div class="fw-bold">{{ user.get_full_name|default:user.username }}</div>
+                                            <div class="small text-muted">{{ user.get_role_display|default:user.role|title }}</div>
+                                            <div class="small text-muted">{{ user.email }}</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li>
+                                <a class="dropdown-item" href="{% url 'accounts:profile' %}">
+                                    <i class="fas fa-user-cog me-2"></i>My Profile
+                                </a>
+                            </li>
+                            <li>
+                                <a class="dropdown-item" href="{% url 'core:dashboard' %}">
+                                    <i class="fas fa-chart-line me-2"></i>Dashboard
+                                </a>
+                            </li>
+                            <li>
+                                <a class="dropdown-item" href="#">
+                                    <i class="fas fa-cog me-2"></i>Settings
+                                </a>
+                            </li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li>
+                                <form method="post" action="{% url 'accounts:logout' %}">
+                                    {% csrf_token %}
+                                    <button class="dropdown-item text-danger" type="submit">
+                                        <i class="fas fa-sign-out-alt me-2"></i>Logout
+                                    </button>
+                                </form>
+                            </li>
+                        </ul>
+                    </div>
+                {% else %}
+                    <!-- Guest Actions - Login button opens modal -->
+                    <div class="guest-actions">
+                        <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#loginModal">
+                            <i class="fas fa-sign-in-alt me-1"></i>Login
+                        </button>
+                    </div>
+                {% endif %}
+            </div>
+
+            <!-- Mobile Menu Toggle -->
+            <button class="mobile-toggle d-lg-none" type="button" data-bs-toggle="collapse" data-bs-target="#mobileNav">
+                <i class="fas fa-bars"></i>
+            </button>
+        </div>
+
+        <!-- Mobile Navigation -->
+        <div class="collapse d-lg-none" id="mobileNav">
+            <div class="mobile-nav-container">
+                {% if user.is_authenticated %}
+                    <a href="{% url 'core:dashboard' %}" class="mobile-nav-link active">Dashboard</a>
+                    <hr>
+                    <a href="{% url 'accounts:profile' %}" class="mobile-nav-link">
+                        <i class="fas fa-user me-2"></i>Profile
+                    </a>
+                    <form method="post" action="{% url 'accounts:logout' %}" class="d-inline">
+                        {% csrf_token %}
+                        <button class="mobile-nav-link text-danger" type="submit">
+                            <i class="fas fa-sign-out-alt me-2"></i>Logout
+                        </button>
+                    </form>
+                {% else %}
+                    <button class="mobile-nav-link" data-bs-toggle="modal" data-bs-target="#loginModal">
+                        <i class="fas fa-sign-in-alt me-2"></i>Login
+                    </button>
+                    <a href="{% url 'accounts:register' %}" class="mobile-nav-link">
+                        <i class="fas fa-user-plus me-2"></i>Register
+                    </a>
+                {% endif %}
+            </div>
         </div>
     </header>
 
-    <div class="app-shell {% if not user.is_authenticated %}guest-shell{% endif %}">
-        {% if user.is_authenticated %}
-            <aside class="app-sidebar">
-                <nav class="side-nav" aria-label="Primary navigation">
-                    <a class="side-link {% if request.resolver_match.app_name == 'core' %}active{% endif %}" href="{% url 'core:dashboard' %}">
-                        <i class="fas fa-house-medical"></i><span>Dashboard</span>
-                    </a>
-                    <a class="side-link" href="#"><i class="far fa-calendar-check"></i><span>Appointments</span></a>
-                    <a class="side-link" href="#"><i class="fas fa-user-injured"></i><span>Patients</span></a>
-                    <a class="side-link {% if request.resolver_match.app_name == 'doctors' %}active{% endif %}" href="{% url 'doctors:dashboard' %}">
-                        <i class="fas fa-user-doctor"></i><span>Doctors</span>
-                    </a>
-                    <a class="side-link" href="#"><i class="fas fa-building-user"></i><span>Departments</span></a>
-                    <a class="side-link" href="#"><i class="fas fa-file-invoice-dollar"></i><span>Billing</span></a>
-                    <a class="side-link {% if request.resolver_match.app_name == 'pharmacy' %}active{% endif %}" href="{% url 'pharmacy:dashboard' %}">
-                        <i class="fas fa-pills"></i><span>Pharmacy</span>
-                    </a>
-                    <a class="side-link {% if request.resolver_match.app_name == 'laboratory' %}active{% endif %}" href="{% url 'laboratory:dashboard' %}">
-                        <i class="fas fa-flask-vial"></i><span>Lab Tests</span>
-                    </a>
-                    <a class="side-link" href="#"><i class="far fa-file-lines"></i><span>Reports</span></a>
-                    <a class="side-link {% if '/inventory' in request.path %}active{% endif %}" href="{% url 'pharmacy:inventory_dashboard' %}">
-                        <i class="fas fa-boxes-stacked"></i><span>Inventory</span>
-                    </a>
-                    <a class="side-link {% if request.resolver_match.app_name == 'nurses' %}active{% endif %}" href="{% url 'nurses:dashboard' %}">
-                        <i class="fas fa-user-nurse"></i><span>Nursing</span>
-                    </a>
-                    <a class="side-link {% if request.resolver_match.app_name == 'reception' %}active{% endif %}" href="{% url 'reception:dashboard' %}">
-                        <i class="fas fa-headset"></i><span>Reception</span>
-                    </a>
-                    <a class="side-link {% if request.resolver_match.app_name == 'triage' %}active{% endif %}" href="{% url 'triage:dashboard' %}">
-                        <i class="fas fa-heart-pulse"></i><span>Triage</span>
-                    </a>
-                    <a class="side-link" href="{% url 'accounts:profile' %}"><i class="fas fa-gear"></i><span>Settings</span></a>
-                </nav>
+    <!-- Spacer for fixed header -->
+    <div class="header-spacer"></div>
 
-                <section class="sidebar-card">
-                    <i class="fas fa-shield-heart"></i>
-                    <strong>TibaFlow HMS</strong>
-                    <span>Smart Hospital Management</span>
-                    <a href="{% url 'core:dashboard' %}">Learn More</a>
-                </section>
-            </aside>
+    <!-- ============================================ -->
+    <!-- MAIN CONTENT -->
+    <!-- ============================================ -->
+    <main class="main-content">
+        <!-- Messages -->
+        {% if messages %}
+            <div class="container-fluid px-4 mt-3">
+                {% for message in messages %}
+                    <div class="alert alert-{{ message.tags }} alert-dismissible fade show shadow-sm" role="alert">
+                        <i class="fas fa-{% if message.tags == 'success' %}check-circle{% elif message.tags == 'error' %}exclamation-circle{% else %}info-circle{% endif %} me-2"></i>
+                        {{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                {% endfor %}
+            </div>
         {% endif %}
 
-        <div class="content-frame">
-            {% if messages %}
-                <div class="message-stack">
-                    {% for message in messages %}
-                        <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
-                            {{ message }}
-                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        <!-- App Shell -->
+        <div class="app-shell {% if not user.is_authenticated %}guest-shell{% endif %}">
+            {% if user.is_authenticated %}
+                <!-- Sidebar -->
+                <aside class="app-sidebar">
+                    <nav class="side-nav">
+                        <div class="side-nav-section">
+                            <span class="side-nav-label">Main</span>
+                            <a class="side-link {% if request.resolver_match.app_name == 'core' %}active{% endif %}" href="{% url 'core:dashboard' %}">
+                                <i class="fas fa-house-medical"></i><span>Dashboard</span>
+                            </a>
+                            <a class="side-link {% if request.resolver_match.app_name == 'patients' %}active{% endif %}" href="{% url 'patients:list' %}">
+                                <i class="fas fa-users"></i><span>Patients</span>
+                            </a>
+                            <a class="side-link" href="#">
+                                <i class="fas fa-calendar-check"></i><span>Appointments</span>
+                            </a>
                         </div>
-                    {% endfor %}
-                </div>
+                        
+                        <div class="side-nav-section">
+                            <span class="side-nav-label">Clinical</span>
+                            <a class="side-link {% if request.resolver_match.app_name == 'doctors' %}active{% endif %}" href="{% url 'doctors:dashboard' %}">
+                                <i class="fas fa-user-doctor"></i><span>Doctors</span>
+                            </a>
+                            <a class="side-link {% if request.resolver_match.app_name == 'nurses' %}active{% endif %}" href="{% url 'nurses:dashboard' %}">
+                                <i class="fas fa-user-nurse"></i><span>Nursing</span>
+                            </a>
+                            <a class="side-link {% if request.resolver_match.app_name == 'triage' %}active{% endif %}" href="{% url 'triage:dashboard' %}">
+                                <i class="fas fa-heart-pulse"></i><span>Triage</span>
+                            </a>
+                            <a class="side-link {% if request.resolver_match.app_name == 'pharmacy' %}active{% endif %}" href="{% url 'pharmacy:dashboard' %}">
+                                <i class="fas fa-pills"></i><span>Pharmacy</span>
+                            </a>
+                            <a class="side-link {% if request.resolver_match.app_name == 'laboratory' %}active{% endif %}" href="{% url 'laboratory:dashboard' %}">
+                                <i class="fas fa-flask-vial"></i><span>Lab Tests</span>
+                            </a>
+                            <a class="side-link {% if request.resolver_match.app_name == 'reception' %}active{% endif %}" href="{% url 'reception:dashboard' %}">
+                                <i class="fas fa-headset"></i><span>Reception</span>
+                            </a>
+                        </div>
+                        
+                        <div class="side-nav-section">
+                            <span class="side-nav-label">System</span>
+                            <a class="side-link" href="#">
+                                <i class="fas fa-chart-bar"></i><span>Reports</span>
+                            </a>
+                            <a class="side-link" href="#">
+                                <i class="fas fa-cog"></i><span>Settings</span>
+                            </a>
+                        </div>
+                    </nav>
+                </aside>
             {% endif %}
 
-            <main class="app-main">
+            <!-- Content Area -->
+            <div class="content-area">
                 {% block content %}{% endblock %}
-            </main>
+            </div>
+        </div>
+    </main>
+
+    <!-- ============================================ -->
+    <!-- LOGIN MODAL -->
+    <!-- ============================================ -->
+    <div class="modal fade" id="loginModal" tabindex="-1" aria-labelledby="loginModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header border-0 pb-0">
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body px-4 pb-4">
+                    <div class="text-center mb-4">
+                        <div class="auth-icon" style="width: 56px; height: 56px; background: linear-gradient(135deg, #0d6efd, #0a58ca); border-radius: 14px; display: inline-flex; align-items: center; justify-content: center; font-size: 1.5rem; color: white; margin-bottom: 0.75rem; box-shadow: 0 8px 30px rgba(13, 110, 253, 0.2);">
+                            <i class="fas fa-heartbeat"></i>
+                        </div>
+                        <h4 class="fw-bold mb-1">Welcome Back</h4>
+                        <p class="text-muted small">Login to your TibaFlow account</p>
+                    </div>
+
+                    <form method="post" action="{% url 'accounts:login' %}" id="loginForm">
+                        {% csrf_token %}
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold">Username</label>
+                            <input type="text" name="username" class="form-control" placeholder="Enter your username" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold">Password</label>
+                            <input type="password" name="password" class="form-control" placeholder="Enter your password" required>
+                        </div>
+                        <button type="submit" class="btn btn-primary w-100">
+                            <i class="fas fa-right-to-bracket me-2"></i>Login
+                        </button>
+                    </form>
+
+                    <div class="text-center mt-3">
+                        <small class="text-muted">Don't have an account? <a href="{% url 'accounts:register' %}" class="text-primary fw-bold">Register</a></small>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 
+    <!-- ============================================ -->
+    <!-- FOOTER -->
+    <!-- ============================================ -->
     <footer class="app-footer">
-        <span>&copy; {% now "Y" %} TibaFlow HMS. All rights reserved.</span>
+        <div class="footer-container">
+            <div class="footer-content">
+                <!-- Left: Copyright -->
+                <div class="footer-left">
+                    <span>&copy; {% now "Y" %} TibaFlow HMS. All rights reserved.</span>
+                </div>
+
+                <!-- Right: Links -->
+                <div class="footer-right">
+                    <a href="#">Privacy Policy</a>
+                    <span class="footer-divider">|</span>
+                    <a href="#">Terms of Service</a>
+                    <span class="footer-divider">|</span>
+                    <a href="#contact">Contact</a>
+                </div>
+            </div>
+        </div>
     </footer>
 
+    <!-- Scripts -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
     <script src="{% static 'js/app.js' %}"></script>
+    
+    <!-- Keep POST forms in sync after Django rotates the CSRF token at login. -->
+    <script>
+        document.addEventListener('submit', async function(event) {
+            const form = event.target;
+            if (!(form instanceof HTMLFormElement)) {
+                return;
+            }
+
+            const method = (form.getAttribute('method') || 'get').toLowerCase();
+            const tokenInputs = form.querySelectorAll('input[name="csrfmiddlewaretoken"]');
+            if (method !== 'post' || tokenInputs.length === 0 || form.dataset.csrfRefreshing === 'true') {
+                return;
+            }
+
+            const action = form.getAttribute('action') || window.location.href;
+            const actionUrl = new URL(action, window.location.href);
+            if (actionUrl.origin !== window.location.origin) {
+                return;
+            }
+
+            event.preventDefault();
+            const submitter = event.submitter;
+
+            try {
+                const response = await fetch("{% url 'core:csrf_token' %}", {
+                    method: 'GET',
+                    credentials: 'same-origin',
+                    headers: {
+                        'Accept': 'application/json',
+                        'X-Requested-With': 'XMLHttpRequest'
+                    }
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    if (data.csrfToken) {
+                        document.querySelectorAll('input[name="csrfmiddlewaretoken"]').forEach(function(input) {
+                            input.value = data.csrfToken;
+                        });
+                    }
+                }
+            } catch (error) {
+                console.warn('Unable to refresh CSRF token before submit.', error);
+            }
+
+            form.dataset.csrfRefreshing = 'true';
+            if (typeof form.requestSubmit === 'function') {
+                form.requestSubmit(submitter || undefined);
+            } else {
+                form.submit();
+            }
+        });
+    </script>
+
+    <!-- Login Modal Script -->
+    <script>
+        // Auto-open login modal if there's an error
+        document.addEventListener('DOMContentLoaded', function() {
+            const urlParams = new URLSearchParams(window.location.search);
+            if (urlParams.has('login') || window.location.pathname === '/accounts/login/') {
+                const loginModal = new bootstrap.Modal(document.getElementById('loginModal'));
+                loginModal.show();
+                if (urlParams.has('login')) {
+                    const newUrl = window.location.pathname;
+                    window.history.pushState({}, '', newUrl);
+                }
+            }
+        });
+
+        // If there are login errors, show the modal
+        document.addEventListener('DOMContentLoaded', function() {
+            const errorMessages = document.querySelectorAll('.alert-error');
+            if (errorMessages.length > 0) {
+                const loginModal = new bootstrap.Modal(document.getElementById('loginModal'));
+                loginModal.show();
+            }
+        });
+    </script>
+    
     {% block extra_js %}{% endblock %}
 </body>
 </html>

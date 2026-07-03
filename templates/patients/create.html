@@ -1,0 +1,181 @@
+{% extends 'base.html' %}
+{% load crispy_forms_tags %}
+
+{% block title %}Register Patient - TibaFlow HMS{% endblock %}
+
+{% block extra_css %}
+<style>
+    .form-section {
+        background: white;
+        border-radius: 12px;
+        padding: 1.5rem;
+        margin-bottom: 1.5rem;
+        border: 1px solid rgba(0,0,0,0.05);
+    }
+    .form-section h5 {
+        color: #0d6efd;
+        font-weight: 600;
+        margin-bottom: 1rem;
+        padding-bottom: 0.5rem;
+        border-bottom: 2px solid rgba(13, 110, 253, 0.1);
+    }
+    .form-section h5 i {
+        margin-right: 0.5rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="h2 mb-1">
+                <i class="fas fa-user-plus text-primary me-2"></i>Register Patient
+            </h1>
+            <p class="text-muted">Register a new patient in the system</p>
+        </div>
+        <div>
+            <a href="{% url 'patients:list' %}" class="btn btn-secondary">
+                <i class="fas fa-arrow-left me-1"></i>Back to Patients
+            </a>
+        </div>
+    </div>
+
+    <form method="post">
+        {% csrf_token %}
+        
+        <!-- Personal Information -->
+        <div class="form-section">
+            <h5><i class="fas fa-user"></i>Personal Information</h5>
+            <div class="row">
+                <div class="col-md-4">
+                    {{ form.first_name|as_crispy_field }}
+                </div>
+                <div class="col-md-4">
+                    {{ form.last_name|as_crispy_field }}
+                </div>
+                <div class="col-md-4">
+                    {{ form.date_of_birth|as_crispy_field }}
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-md-4">
+                    {{ form.gender|as_crispy_field }}
+                </div>
+                <div class="col-md-4">
+                    {{ form.blood_type|as_crispy_field }}
+                </div>
+            </div>
+        </div>
+
+        <!-- Contact Information -->
+        <div class="form-section">
+            <h5><i class="fas fa-address-card"></i>Contact Information</h5>
+            <div class="row">
+                <div class="col-md-6">
+                    {{ form.phone_number|as_crispy_field }}
+                </div>
+                <div class="col-md-6">
+                    {{ form.email|as_crispy_field }}
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-12">
+                    {{ form.address|as_crispy_field }}
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-md-6">
+                    {{ form.emergency_contact_name|as_crispy_field }}
+                </div>
+                <div class="col-md-6">
+                    {{ form.emergency_contact_phone|as_crispy_field }}
+                </div>
+            </div>
+        </div>
+
+        <!-- Medical History -->
+        <div class="form-section">
+            <h5><i class="fas fa-heartbeat"></i>Medical History</h5>
+            <div class="row">
+                <div class="col-md-6">
+                    {{ form.allergies|as_crispy_field }}
+                </div>
+                <div class="col-md-6">
+                    {{ form.chronic_conditions|as_crispy_field }}
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-md-6">
+                    {{ form.previous_surgeries|as_crispy_field }}
+                </div>
+                <div class="col-md-6">
+                    {{ form.current_medications|as_crispy_field }}
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-md-6">
+                    {{ form.family_medical_history|as_crispy_field }}
+                </div>
+                <div class="col-md-6">
+                    {{ form.medical_history_notes|as_crispy_field }}
+                </div>
+            </div>
+        </div>
+
+        <!-- Insurance Information -->
+        <div class="form-section">
+            <h5><i class="fas fa-file-invoice"></i>Insurance Information</h5>
+            <div class="row">
+                <div class="col-md-4">
+                    {{ form.insurance_type|as_crispy_field }}
+                </div>
+                <div class="col-md-4">
+                    {{ form.insurance_number|as_crispy_field }}
+                </div>
+                <div class="col-md-4">
+                    {{ form.insurance_expiry|as_crispy_field }}
+                </div>
+            </div>
+        </div>
+
+        <!-- Primary Physician -->
+        <div class="form-section">
+            <h5><i class="fas fa-user-md"></i>Primary Physician</h5>
+            <div class="row">
+                <div class="col-12">
+                    {{ form.primary_physician|as_crispy_field }}
+                </div>
+            </div>
+        </div>
+
+        <!-- Submit -->
+        <div class="d-flex justify-content-between">
+            <a href="{% url 'patients:list' %}" class="btn btn-secondary">
+                <i class="fas fa-times me-1"></i>Cancel
+            </a>
+            <button type="submit" class="btn btn-primary">
+                <i class="fas fa-save me-1"></i>Register Patient
+            </button>
+        </div>
+    </form>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Show/hide insurance fields based on insurance type
+    const insuranceType = document.querySelector('#id_insurance_type');
+    const insuranceFields = document.querySelectorAll('.field-insurance_number, .field-insurance_expiry');
+    
+    function toggleInsuranceFields() {
+        const show = insuranceType.value !== 'none';
+        insuranceFields.forEach(field => {
+            field.style.display = show ? 'block' : 'none';
+        });
+    }
+    
+    insuranceType.addEventListener('change', toggleInsuranceFields);
+    toggleInsuranceFields();
+});
+</script>
+{% endblock %}

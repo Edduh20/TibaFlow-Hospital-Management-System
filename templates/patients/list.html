@@ -1,0 +1,300 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Patients - TibaFlow HMS{% endblock %}
+
+{% block extra_css %}
+<style>
+    .stat-card {
+        background: white;
+        border-radius: 12px;
+        padding: 1.5rem;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        transition: all 0.3s ease;
+        border-left: 4px solid #0d6efd;
+        height: 100%;
+    }
+    .stat-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+    }
+    .stat-card .stat-number {
+        font-size: 2rem;
+        font-weight: 700;
+    }
+    .stat-card.total { border-left-color: #0d6efd; }
+    .stat-card.admitted { border-left-color: #dc3545; }
+    .stat-card.active { border-left-color: #198754; }
+    .stat-card.discharged { border-left-color: #6c757d; }
+    
+    .patient-row {
+        transition: all 0.3s ease;
+    }
+    .patient-row:hover {
+        background: #f8f9fa;
+        transform: translateX(5px);
+    }
+    .status-badge {
+        font-size: 0.7rem;
+        padding: 0.25rem 0.75rem;
+    }
+    .empty-state {
+        padding: 4rem 1rem;
+        text-align: center;
+    }
+    .empty-state i {
+        font-size: 4rem;
+        color: #dee2e6;
+        margin-bottom: 1rem;
+    }
+    .filter-section {
+        background: #f8f9fa;
+        border-radius: 10px;
+        padding: 1rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Page Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="h2 mb-1">
+                <i class="fas fa-users text-primary me-2"></i>Patients
+            </h1>
+            <p class="text-muted">Manage all patients in the system</p>
+        </div>
+        <div>
+            {% if user.role in 'reception,admin' %}
+                <a href="{% url 'patients:create' %}" class="btn btn-primary">
+                    <i class="fas fa-user-plus me-2"></i>Register Patient
+                </a>
+                <a href="{% url 'patients:export' %}" class="btn btn-success">
+                    <i class="fas fa-file-export me-2"></i>Export
+                </a>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Statistics -->
+    {% if stats %}
+        <div class="row g-4 mb-4">
+            <div class="col-md-3 col-sm-6">
+                <div class="stat-card total">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div>
+                            <div class="stat-number">{{ stats.total }}</div>
+                            <div class="text-muted">Total Patients</div>
+                        </div>
+                        <div class="text-primary" style="font-size: 2rem; opacity: 0.3;">
+                            <i class="fas fa-users"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3 col-sm-6">
+                <div class="stat-card admitted">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div>
+                            <div class="stat-number">{{ stats.admitted }}</div>
+                            <div class="text-muted">Admitted</div>
+                        </div>
+                        <div class="text-danger" style="font-size: 2rem; opacity: 0.3;">
+                            <i class="fas fa-hospital-user"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3 col-sm-6">
+                <div class="stat-card active">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div>
+                            <div class="stat-number">{{ stats.active }}</div>
+                            <div class="text-muted">Active</div>
+                        </div>
+                        <div class="text-success" style="font-size: 2rem; opacity: 0.3;">
+                            <i class="fas fa-check-circle"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3 col-sm-6">
+                <div class="stat-card discharged">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div>
+                            <div class="stat-number">{{ stats.discharged }}</div>
+                            <div class="text-muted">Discharged</div>
+                        </div>
+                        <div class="text-secondary" style="font-size: 2rem; opacity: 0.3;">
+                            <i class="fas fa-door-open"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    {% endif %}
+
+    <!-- Search and Filter -->
+    <div class="filter-section mb-4">
+        <form method="get" class="row g-3">
+            <div class="col-md-4">
+                <div class="input-group">
+                    <span class="input-group-text"><i class="fas fa-search"></i></span>
+                    <input type="text" name="search" class="form-control" 
+                           placeholder="Search by name, phone, email..." 
+                           value="{{ search|default:'' }}">
+                </div>
+            </div>
+            <div class="col-md-2">
+                <select name="status" class="form-select">
+                    <option value="">All Status</option>
+                    <option value="active" {% if status_filter == 'active' %}selected{% endif %}>Active</option>
+                    <option value="admitted" {% if status_filter == 'admitted' %}selected{% endif %}>Admitted</option>
+                    <option value="discharged" {% if status_filter == 'discharged' %}selected{% endif %}>Discharged</option>
+                    <option value="referred" {% if status_filter == 'referred' %}selected{% endif %}>Referred</option>
+                </select>
+            </div>
+            <div class="col-md-2">
+                <select name="insurance" class="form-select">
+                    <option value="">All Insurance</option>
+                    <option value="nhif" {% if insurance_filter == 'nhif' %}selected{% endif %}>NHIF</option>
+                    <option value="private" {% if insurance_filter == 'private' %}selected{% endif %}>Private</option>
+                    <option value="none" {% if insurance_filter == 'none' %}selected{% endif %}>None</option>
+                </select>
+            </div>
+            <div class="col-md-2">
+                <select name="sort" class="form-select">
+                    <option value="-created_at" {% if sort == '-created_at' %}selected{% endif %}>Newest</option>
+                    <option value="created_at" {% if sort == 'created_at' %}selected{% endif %}>Oldest</option>
+                    <option value="first_name" {% if sort == 'first_name' %}selected{% endif %}>Name A-Z</option>
+                    <option value="-first_name" {% if sort == '-first_name' %}selected{% endif %}>Name Z-A</option>
+                </select>
+            </div>
+            <div class="col-md-2">
+                <button type="submit" class="btn btn-primary w-100">
+                    <i class="fas fa-filter me-1"></i>Apply
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <!-- Patient Table -->
+    <div class="card">
+        <div class="card-body p-0">
+            {% if patients %}
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th>#</th>
+                                <th>Name</th>
+                                <th>Age</th>
+                                <th>Gender</th>
+                                <th>Phone</th>
+                                <th>Insurance</th>
+                                <th>Status</th>
+                                <th>Visits</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for patient in patients %}
+                                <tr class="patient-row">
+                                    <td>{{ forloop.counter }}</td>
+                                    <td>
+                                        <a href="{% url 'patients:detail' patient.id %}" class="fw-bold">
+                                            {{ patient.full_name }}
+                                        </a>
+                                    </td>
+                                    <td>{{ patient.age }}</td>
+                                    <td>{{ patient.get_gender_display }}</td>
+                                    <td>{{ patient.phone_number }}</td>
+                                    <td>{{ patient.get_insurance_type_display }}</td>
+                                    <td>
+                                        <span class="badge bg-{% if patient.is_admitted %}danger{% elif patient.status == 'discharged' %}secondary{% elif patient.status == 'referred' %}warning{% else %}success{% endif %} status-badge">
+                                            {{ patient.display_status }}
+                                        </span>
+                                    </td>
+                                    <td>{{ patient.visit_count }}</td>
+                                    <td>
+                                        <div class="btn-group btn-group-sm">
+                                            <a href="{% url 'patients:detail' patient.id %}" 
+                                               class="btn btn-outline-primary" title="View">
+                                                <i class="fas fa-eye"></i>
+                                            </a>
+                                            {% if user.role in 'reception,admin' %}
+                                                <a href="{% url 'patients:edit' patient.id %}" 
+                                                   class="btn btn-outline-secondary" title="Edit">
+                                                    <i class="fas fa-edit"></i>
+                                                </a>
+                                            {% endif %}
+                                            {% if user.role in 'reception,admin,doctor' %}
+                                                {% if not patient.is_admitted %}
+                                                    <a href="{% url 'patients:admit' patient.id %}" 
+                                                       class="btn btn-outline-success" title="Admit">
+                                                        <i class="fas fa-hospital-user"></i>
+                                                    </a>
+                                                {% else %}
+                                                    <a href="{% url 'patients:discharge' patient.id %}" 
+                                                       class="btn btn-outline-warning" title="Discharge">
+                                                        <i class="fas fa-door-open"></i>
+                                                    </a>
+                                                {% endif %}
+                                            {% endif %}
+                                        </div>
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% else %}
+                <div class="empty-state">
+                    <i class="fas fa-user-slash"></i>
+                    <h5 class="text-muted">No Patients Found</h5>
+                    <p class="text-muted small">No patients match your search criteria.</p>
+                    {% if user.role in 'reception,admin' %}
+                        <a href="{% url 'patients:create' %}" class="btn btn-primary">
+                            <i class="fas fa-user-plus me-1"></i>Register Patient
+                        </a>
+                    {% endif %}
+                </div>
+            {% endif %}
+        </div>
+
+        <!-- Pagination -->
+        {% if patients.has_other_pages %}
+            <div class="card-footer">
+                <nav aria-label="Page navigation">
+                    <ul class="pagination justify-content-center mb-0">
+                        {% if patients.has_previous %}
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ patients.previous_page_number }}{% if search %}&search={{ search }}{% endif %}{% if status_filter %}&status={{ status_filter }}{% endif %}">
+                                    <i class="fas fa-chevron-left"></i>
+                                </a>
+                            </li>
+                        {% endif %}
+                        
+                        {% for num in patients.paginator.page_range %}
+                            <li class="page-item {% if patients.number == num %}active{% endif %}">
+                                <a class="page-link" href="?page={{ num }}{% if search %}&search={{ search }}{% endif %}{% if status_filter %}&status={{ status_filter }}{% endif %}">
+                                    {{ num }}
+                                </a>
+                            </li>
+                        {% endfor %}
+                        
+                        {% if patients.has_next %}
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ patients.next_page_number }}{% if search %}&search={{ search }}{% endif %}{% if status_filter %}&status={{ status_filter }}{% endif %}">
+                                    <i class="fas fa-chevron-right"></i>
+                                </a>
+                            </li>
+                        {% endif %}
+                    </ul>
+                </nav>
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

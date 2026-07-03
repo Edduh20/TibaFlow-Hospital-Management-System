@@ -3,43 +3,395 @@
 
 {% block title %}TibaFlow HMS - Smart Hospital Management{% endblock %}
 
+{% block extra_css %}
+<style>
+    /* ============================================ */
+    /* LANDING PAGE STYLES */
+    /* ============================================ */
+    .landing-page {
+        min-height: calc(100vh - 70px);
+        display: flex;
+        flex-direction: column;
+        background: #f8fafc;
+    }
+
+    /* Hero Section */
+    .landing-hero {
+        flex: 1;
+        display: flex;
+        align-items: center;
+        padding: 4rem 2rem;
+        background: linear-gradient(135deg, #0d6efd 0%, #0a58ca 50%, #084298 100%);
+        position: relative;
+        overflow: hidden;
+        min-height: 70vh;
+    }
+
+    .landing-hero::before {
+        content: '';
+        position: absolute;
+        top: -30%;
+        right: -10%;
+        width: 600px;
+        height: 600px;
+        background: radial-gradient(circle, rgba(255,255,255,0.08) 0%, transparent 70%);
+        border-radius: 50%;
+        animation: float 8s ease-in-out infinite;
+    }
+
+    .landing-hero::after {
+        content: '';
+        position: absolute;
+        bottom: -20%;
+        left: -5%;
+        width: 400px;
+        height: 400px;
+        background: radial-gradient(circle, rgba(255,255,255,0.05) 0%, transparent 70%);
+        border-radius: 50%;
+        animation: float 6s ease-in-out infinite reverse;
+    }
+
+    @keyframes float {
+        0%, 100% { transform: translate(0, 0); }
+        50% { transform: translate(30px, -30px); }
+    }
+
+    .landing-copy {
+        position: relative;
+        z-index: 1;
+        max-width: 700px;
+        margin: 0 auto;
+        text-align: center;
+        color: white;
+    }
+
+    .landing-kicker {
+        display: inline-block;
+        background: rgba(255,255,255,0.15);
+        backdrop-filter: blur(10px);
+        padding: 0.4rem 1.2rem;
+        border-radius: 50px;
+        font-size: 0.8rem;
+        font-weight: 600;
+        letter-spacing: 1px;
+        text-transform: uppercase;
+        margin-bottom: 1.5rem;
+        border: 1px solid rgba(255,255,255,0.1);
+    }
+
+    .landing-copy h1 {
+        font-size: 4rem;
+        font-weight: 900;
+        margin-bottom: 1rem;
+        letter-spacing: -2px;
+        text-shadow: 0 4px 20px rgba(0,0,0,0.15);
+    }
+
+    .landing-copy h1 span {
+        display: inline-block;
+        background: linear-gradient(135deg, #fff, rgba(255,255,255,0.8));
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+    }
+
+    .landing-lede {
+        font-size: 1.25rem;
+        opacity: 0.9;
+        max-width: 600px;
+        margin: 0 auto 2rem;
+        line-height: 1.8;
+        font-weight: 300;
+    }
+
+    .landing-actions {
+        display: flex;
+        justify-content: center;
+        gap: 1rem;
+        flex-wrap: wrap;
+    }
+
+    .landing-actions .btn {
+        padding: 0.8rem 2.5rem;
+        border-radius: 50px;
+        font-weight: 600;
+        transition: all 0.3s ease;
+        font-size: 1.05rem;
+    }
+
+    .landing-actions .btn-light {
+        background: white;
+        color: #0d6efd;
+        box-shadow: 0 8px 30px rgba(0,0,0,0.15);
+    }
+
+    .landing-actions .btn-light:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 12px 40px rgba(0,0,0,0.25);
+        background: white;
+    }
+
+    .landing-actions .btn-outline-light {
+        border: 2px solid rgba(255,255,255,0.3);
+        color: white;
+        background: transparent;
+    }
+
+    .landing-actions .btn-outline-light:hover {
+        background: rgba(255,255,255,0.1);
+        border-color: white;
+        transform: translateY(-3px);
+    }
+
+    /* Feature Band */
+    .landing-feature-band {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+        gap: 2rem;
+        padding: 4rem 2rem;
+        max-width: 1200px;
+        margin: 0 auto;
+        width: 100%;
+        background: white;
+        border-radius: 24px 24px 0 0;
+        margin-top: -2rem;
+        position: relative;
+        z-index: 2;
+        box-shadow: 0 -8px 40px rgba(0,0,0,0.06);
+    }
+
+    .landing-feature-band article {
+        display: flex;
+        align-items: flex-start;
+        gap: 1.25rem;
+        padding: 1.5rem;
+        border-radius: 16px;
+        transition: all 0.3s ease;
+        background: #f8fafc;
+        border: 1px solid transparent;
+    }
+
+    .landing-feature-band article:hover {
+        background: white;
+        border-color: rgba(13, 110, 253, 0.1);
+        box-shadow: 0 8px 30px rgba(0,0,0,0.06);
+        transform: translateY(-4px);
+    }
+
+    .stat-icon {
+        width: 56px;
+        height: 56px;
+        border-radius: 14px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+        flex-shrink: 0;
+    }
+
+    .stat-icon.tone-blue {
+        background: rgba(13, 110, 253, 0.1);
+        color: #0d6efd;
+    }
+
+    .stat-icon.tone-green {
+        background: rgba(25, 135, 84, 0.1);
+        color: #198754;
+    }
+
+    .stat-icon.tone-amber {
+        background: rgba(255, 193, 7, 0.1);
+        color: #ffc107;
+    }
+
+    .landing-feature-band article h2 {
+        font-size: 1.1rem;
+        font-weight: 700;
+        margin: 0 0 0.3rem 0;
+        color: #1a1a2e;
+    }
+
+    .landing-feature-band article p {
+        font-size: 0.9rem;
+        color: #6c757d;
+        margin: 0;
+        line-height: 1.5;
+    }
+
+    /* Stats Section */
+    .landing-stats {
+        padding: 3rem 2rem;
+        background: white;
+        border-top: 1px solid rgba(0,0,0,0.04);
+    }
+
+    .landing-stats .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+        gap: 2rem;
+        max-width: 1000px;
+        margin: 0 auto;
+        text-align: center;
+    }
+
+    .stat-item .stat-number {
+        font-size: 2.5rem;
+        font-weight: 900;
+        color: #0d6efd;
+        display: block;
+        line-height: 1.2;
+    }
+
+    .stat-item .stat-label {
+        color: #6c757d;
+        font-size: 0.9rem;
+        font-weight: 500;
+    }
+
+    /* Trust Section */
+    .landing-trust {
+        padding: 3rem 2rem;
+        background: #f8fafc;
+        text-align: center;
+    }
+
+    .landing-trust p {
+        color: #6c757d;
+        font-size: 0.85rem;
+        font-weight: 500;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        margin-bottom: 1.5rem;
+    }
+
+    .trust-logos {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        gap: 3rem;
+        flex-wrap: wrap;
+    }
+
+    .trust-logos span {
+        color: #adb5bd;
+        font-size: 1.2rem;
+        font-weight: 600;
+        opacity: 0.6;
+        transition: opacity 0.3s ease;
+    }
+
+    .trust-logos span:hover {
+        opacity: 1;
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+        .landing-hero {
+            padding: 3rem 1.5rem;
+            min-height: 60vh;
+        }
+
+        .landing-copy h1 {
+            font-size: 2.5rem;
+        }
+
+        .landing-lede {
+            font-size: 1rem;
+        }
+
+        .landing-feature-band {
+            grid-template-columns: 1fr;
+            padding: 2rem 1.5rem;
+            margin-top: -1rem;
+        }
+
+        .landing-actions .btn {
+            padding: 0.6rem 1.5rem;
+            font-size: 0.9rem;
+        }
+
+        .stat-item .stat-number {
+            font-size: 2rem;
+        }
+
+        .trust-logos {
+            gap: 1.5rem;
+        }
+
+        .trust-logos span {
+            font-size: 1rem;
+        }
+    }
+
+    @media (max-width: 480px) {
+        .landing-copy h1 {
+            font-size: 2rem;
+        }
+
+        .landing-kicker {
+            font-size: 0.7rem;
+            padding: 0.3rem 1rem;
+        }
+
+        .landing-feature-band article {
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+        }
+    }
+</style>
+{% endblock %}
+
 {% block content %}
 <section class="landing-page">
+    <!-- Hero Section -->
     <div class="landing-hero">
         <div class="landing-copy">
-            <p class="landing-kicker">Smart Hospital Management</p>
-            <h1>TibaFlow HMS</h1>
-            <p class="landing-lede">Run appointments, patient records, pharmacy, laboratory, billing, and staff workflows from one calm command center.</p>
+            <p class="landing-kicker">
+                <i class="fas fa-heartbeat me-2"></i>Smart Hospital Management
+            </p>
+            <h1>TibaFlow <span>HMS</span></h1>
+            <p class="landing-lede">
+                Run appointments, patient records, pharmacy, laboratory, billing, 
+                and staff workflows from one calm command center.
+            </p>
             <div class="landing-actions">
                 {% if user.is_authenticated %}
-                    <a href="{% url 'core:dashboard' %}" class="btn btn-light btn-lg"><i class="fas fa-chart-line me-2"></i>Go to Dashboard</a>
+                    <a href="{% url 'core:dashboard' %}" class="btn btn-light btn-lg">
+                        <i class="fas fa-chart-line me-2"></i>Go to Dashboard
+                    </a>
                 {% else %}
-                    <a href="{% url 'accounts:login' %}" class="btn btn-light btn-lg"><i class="fas fa-right-to-bracket me-2"></i>Login</a>
+                    <!-- Login button that opens modal -->
+                    <button class="btn btn-light btn-lg" data-bs-toggle="modal" data-bs-target="#loginModal">
+                        <i class="fas fa-right-to-bracket me-2"></i>Login
+                    </button>
+                   
                 {% endif %}
             </div>
         </div>
     </div>
 
+    <!-- Feature Band -->
     <div class="landing-feature-band">
         <article>
             <span class="stat-icon tone-blue"><i class="far fa-calendar-check"></i></span>
             <div>
                 <h2>Appointments</h2>
-                <p>Schedule, check in, and route patients faster.</p>
+                <p>Schedule, check in, and route patients faster with intelligent queue management.</p>
             </div>
         </article>
         <article>
             <span class="stat-icon tone-green"><i class="fas fa-user-doctor"></i></span>
             <div>
                 <h2>Clinical Flow</h2>
-                <p>Connect triage, doctors, nurses, lab, and pharmacy.</p>
+                <p>Connect triage, doctors, nurses, lab, and pharmacy in a seamless workflow.</p>
             </div>
         </article>
         <article>
             <span class="stat-icon tone-amber"><i class="fas fa-chart-line"></i></span>
             <div>
                 <h2>Hospital Insight</h2>
-                <p>See operations, revenue, and department activity clearly.</p>
+                <p>See operations, revenue, and department activity clearly with real-time analytics.</p>
             </div>
         </article>
     </div>

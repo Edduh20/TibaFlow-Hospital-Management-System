@@ -1,0 +1,81 @@
+{% extends 'base.html' %}
+{% load crispy_forms_tags %}
+
+{% block title %}Verify Insurance - TibaFlow HMS{% endblock %}
+
+{% block extra_css %}
+<style>
+    .verification-status {
+        padding: 1rem;
+        border-radius: 10px;
+        text-align: center;
+    }
+    .verification-status.pending {
+        background: #fff3cd;
+        border: 1px solid #ffc107;
+    }
+    .verification-status.verified {
+        background: #d1e7dd;
+        border: 1px solid #198754;
+    }
+    .verification-status.failed {
+        background: #f8d7da;
+        border: 1px solid #dc3545;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card">
+                <div class="card-header bg-info text-white">
+                    <h4 class="mb-0">
+                        <i class="fas fa-shield-alt me-2"></i>Verify Insurance
+                    </h4>
+                </div>
+                <div class="card-body">
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle me-2"></i>
+                        <strong>Patient:</strong> {{ patient.full_name }}<br>
+                        <strong>Visit:</strong> {{ visit.visit_number }}<br>
+                        <strong>Insurance Type:</strong> {{ patient.get_insurance_type_display }}
+                    </div>
+
+                    {% if verification %}
+                        <div class="verification-status {{ verification.verification_status }}">
+                            <h6>
+                                <i class="fas fa-{% if verification.verification_status == 'verified' %}check-circle{% elif verification.verification_status == 'pending' %}clock{% else %}times-circle{% endif %} me-2"></i>
+                                Status: {{ verification.get_verification_status_display|upper }}
+                            </h6>
+                            {% if verification.verified_at %}
+                                <small>Verified: {{ verification.verified_at|date:"M d, Y H:i" }}</small>
+                            {% endif %}
+                        </div>
+                    {% endif %}
+
+                    <form method="post" class="mt-4">
+                        {% csrf_token %}
+                        {{ form|crispy }}
+                        
+                        <div class="d-flex flex-wrap justify-content-between mt-3 gap-2">
+                            <a href="{% url 'reception:patient_detail' patient.id %}" class="btn btn-secondary">
+                                <i class="fas fa-arrow-left me-1"></i>Cancel
+                            </a>
+                            <div>
+                                <button type="submit" name="manual_verify" value="1" class="btn btn-success">
+                                    <i class="fas fa-check me-1"></i>Verify & Complete
+                                </button>
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="fas fa-save me-1"></i>Save Only
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

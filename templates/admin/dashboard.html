@@ -1,166 +1,368 @@
 {% extends 'base.html' %}
+{% load static %}
 
 {% block title %}Admin Dashboard - TibaFlow HMS{% endblock %}
 
+{% block extra_css %}
+<style>
+    /* Stats Cards */
+    .stat-card {
+        background: white;
+        border-radius: 16px;
+        padding: 1.5rem 1.5rem 1.25rem;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+        transition: all 0.3s ease;
+        border: 1px solid rgba(0,0,0,0.04);
+        height: 100%;
+        position: relative;
+        overflow: hidden;
+    }
+    .stat-card:hover {
+        transform: translateY(-6px);
+        box-shadow: 0 12px 40px rgba(0,0,0,0.08);
+    }
+    .stat-card .stat-icon {
+        width: 48px;
+        height: 48px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.3rem;
+        margin-bottom: 0.75rem;
+    }
+    .stat-card .stat-icon.blue { background: rgba(13, 110, 253, 0.1); color: #0d6efd; }
+    .stat-card .stat-icon.green { background: rgba(25, 135, 84, 0.1); color: #198754; }
+    .stat-card .stat-icon.red { background: rgba(220, 53, 69, 0.1); color: #dc3545; }
+    .stat-card .stat-icon.gold { background: rgba(255, 193, 7, 0.1); color: #ffc107; }
+    
+    .stat-card .stat-number {
+        font-size: 2rem;
+        font-weight: 700;
+        color: #1a1a2e;
+        letter-spacing: -0.5px;
+    }
+    .stat-card .stat-label {
+        color: #6c757d;
+        font-size: 0.9rem;
+        font-weight: 500;
+    }
+    .stat-card .stat-change {
+        font-size: 0.75rem;
+        font-weight: 600;
+        padding: 0.2rem 0.6rem;
+        border-radius: 20px;
+        display: inline-block;
+    }
+    .stat-change.up { background: rgba(25, 135, 84, 0.1); color: #198754; }
+    .stat-change.down { background: rgba(220, 53, 69, 0.1); color: #dc3545; }
+    
+    /* Department Distribution */
+    .department-item {
+        display: flex;
+        align-items: center;
+        padding: 0.6rem 0;
+        border-bottom: 1px solid rgba(0,0,0,0.04);
+    }
+    .department-item:last-child { border-bottom: none; }
+    .department-item .dept-name { flex: 1; font-weight: 500; }
+    .department-item .dept-percent { font-weight: 600; color: #1a1a2e; }
+    .progress-bar-custom {
+        height: 6px;
+        border-radius: 10px;
+        background: #e9ecef;
+        flex: 1;
+        margin: 0 1rem;
+        overflow: hidden;
+    }
+    .progress-bar-custom .progress-fill {
+        height: 100%;
+        border-radius: 10px;
+        transition: width 1s ease;
+    }
+    
+    /* Quick Actions */
+    .quick-action-btn {
+        padding: 0.75rem 1rem;
+        border-radius: 10px;
+        border: 1px solid rgba(0,0,0,0.06);
+        background: white;
+        transition: all 0.3s ease;
+        text-align: center;
+        text-decoration: none;
+        display: block;
+        color: #1a1a2e;
+    }
+    .quick-action-btn:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 8px 25px rgba(0,0,0,0.08);
+        border-color: transparent;
+        text-decoration: none;
+        color: #1a1a2e;
+    }
+    .quick-action-btn i {
+        font-size: 1.5rem;
+        display: block;
+        margin-bottom: 0.3rem;
+    }
+    .quick-action-btn span {
+        font-size: 0.8rem;
+        font-weight: 500;
+    }
+    
+    /* Welcome Section */
+    .welcome-section {
+        background: linear-gradient(135deg, #0d6efd, #0a58ca);
+        border-radius: 16px;
+        padding: 2rem;
+        color: white;
+        position: relative;
+        overflow: hidden;
+    }
+    .welcome-section::before {
+        content: '';
+        position: absolute;
+        top: -50%;
+        right: -20%;
+        width: 300px;
+        height: 300px;
+        background: rgba(255,255,255,0.05);
+        border-radius: 50%;
+    }
+    .welcome-section h2 {
+        font-weight: 700;
+        font-size: 1.8rem;
+    }
+    .welcome-section p {
+        opacity: 0.8;
+        margin-bottom: 0;
+    }
+    
+    /* Recent Activity */
+    .activity-item {
+        padding: 0.75rem 0;
+        border-bottom: 1px solid rgba(0,0,0,0.04);
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+    }
+    .activity-item:last-child { border-bottom: none; }
+    .activity-icon {
+        width: 40px;
+        height: 40px;
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+    }
+    .activity-content { flex: 1; }
+    .activity-content .title { font-weight: 500; font-size: 0.95rem; }
+    .activity-content .time { color: #6c757d; font-size: 0.8rem; }
+    
+    @media (max-width: 768px) {
+        .stat-card .stat-number { font-size: 1.5rem; }
+        .welcome-section h2 { font-size: 1.3rem; }
+    }
+</style>
+{% endblock %}
+
 {% block content %}
-<section class="dashboard-page">
-    <div class="dashboard-hero">
-        <div>
-            <p class="eyebrow">Welcome back,</p>
-            <h1>{{ user.display_name }}</h1>
-            <p>Here's what's happening in your hospital today.</p>
+<div class="container-fluid">
+    <!-- Welcome Section -->
+    <div class="welcome-section mb-4">
+        <div class="row align-items-center">
+            <div class="col-md-8">
+                <p class="mb-1">WELCOME BACK,</p>
+                <h2>{{ user.get_full_name|default:user.username }}</h2>
+                <p>{{ user.get_role_display }} • Today is {{ today|date:"l, F d, Y" }}</p>
+            </div>
+            <div class="col-md-4 text-md-end mt-3 mt-md-0">
+                <span class="badge bg-white text-primary px-3 py-2">
+                    <i class="fas fa-circle text-success me-1" style="font-size: 0.5rem;"></i>
+                    System Online
+                </span>
+            </div>
         </div>
-        <span class="date-pill"><i class="far fa-calendar-check"></i>{% now "F j, Y" %}<i class="fas fa-chevron-down"></i></span>
     </div>
 
-    <div class="stats-grid">
-        <article class="stat-card">
-            <span class="stat-icon tone-purple"><i class="fas fa-users"></i></span>
-            <div>
-                <p class="stat-label">Total Patients</p>
-                <p class="stat-value">1,246</p>
-                <p class="stat-change">+12% from yesterday</p>
+    <!-- Stats Cards -->
+    <div class="row g-4 mb-4">
+        <div class="col-lg-3 col-md-6">
+            <div class="stat-card">
+                <div class="stat-icon blue"><i class="fas fa-users"></i></div>
+                <div class="stat-number">{{ stats.total_patients|default:"0" }}</div>
+                <div class="stat-label">Total Patients</div>
+                <div class="mt-1">
+                    <span class="stat-change up"><i class="fas fa-arrow-up me-1"></i>{{ stats.patient_growth|default:"0" }}% from yesterday</span>
+                </div>
             </div>
-            <span class="sparkline" aria-hidden="true"></span>
-        </article>
-        <article class="stat-card">
-            <span class="stat-icon tone-blue"><i class="far fa-calendar-check"></i></span>
-            <div>
-                <p class="stat-label">Appointments</p>
-                <p class="stat-value">89</p>
-                <p class="stat-change">+8% from yesterday</p>
+        </div>
+        <div class="col-lg-3 col-md-6">
+            <div class="stat-card">
+                <div class="stat-icon gold"><i class="fas fa-calendar-check"></i></div>
+                <div class="stat-number">{{ stats.today_appointments|default:"0" }}</div>
+                <div class="stat-label">Appointments Today</div>
+                <div class="mt-1">
+                    <span class="stat-change up"><i class="fas fa-arrow-up me-1"></i>{{ stats.appointment_growth|default:"0" }}% from yesterday</span>
+                </div>
             </div>
-            <span class="sparkline" aria-hidden="true"></span>
-        </article>
-        <article class="stat-card">
-            <span class="stat-icon tone-green"><i class="fas fa-bed-pulse"></i></span>
-            <div>
-                <p class="stat-label">Admitted Patients</p>
-                <p class="stat-value">32</p>
-                <p class="stat-change">+5% from yesterday</p>
+        </div>
+        <div class="col-lg-3 col-md-6">
+            <div class="stat-card">
+                <div class="stat-icon red"><i class="fas fa-hospital-user"></i></div>
+                <div class="stat-number">{{ stats.admitted_patients|default:"0" }}</div>
+                <div class="stat-label">Admitted Patients</div>
+                <div class="mt-1">
+                    <span class="stat-change up"><i class="fas fa-arrow-up me-1"></i>{{ stats.admitted_growth|default:"0" }}% from yesterday</span>
+                </div>
             </div>
-            <span class="sparkline" aria-hidden="true"></span>
-        </article>
-        <article class="stat-card">
-            <span class="stat-icon tone-amber"><i class="fas fa-dollar-sign"></i></span>
-            <div>
-                <p class="stat-label">Total Revenue</p>
-                <p class="stat-value">$45,231</p>
-                <p class="stat-change">+18% from yesterday</p>
+        </div>
+        <div class="col-lg-3 col-md-6">
+            <div class="stat-card">
+                <div class="stat-icon green"><i class="fas fa-money-bill-wave"></i></div>
+                <div class="stat-number">${{ stats.total_revenue|default:"0" }}</div>
+                <div class="stat-label">Total Revenue</div>
+                <div class="mt-1">
+                    <span class="stat-change up"><i class="fas fa-arrow-up me-1"></i>{{ stats.revenue_growth|default:"0" }}% from yesterday</span>
+                </div>
             </div>
-            <span class="sparkline" aria-hidden="true"></span>
-        </article>
+        </div>
     </div>
 
-    <div class="dashboard-grid">
-        <section class="panel">
-            <div class="panel-header">
-                <h2 class="panel-title">Appointments Overview</h2>
-                <span class="select-pill">This Week <i class="fas fa-chevron-down"></i></span>
-            </div>
-            <div class="line-chart" aria-label="Appointments overview chart">
-                <div class="chart-labels">
-                    <span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span>Fri</span><span>Sat</span><span>Sun</span>
+    <!-- Department Distribution & Recent Activity -->
+    <div class="row g-4">
+        <!-- Department Distribution -->
+        <div class="col-lg-6">
+            <div class="card h-100">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-chart-pie text-primary me-2"></i>Department Distribution
+                    </h5>
+                </div>
+                <div class="card-body">
+                    {% for dept in departments %}
+                        <div class="department-item">
+                            <span class="dept-name">{{ dept.name }}</span>
+                            <div class="progress-bar-custom">
+                                <div class="progress-fill" style="width: {{ dept.percentage }}%; background: {{ dept.color }};"></div>
+                            </div>
+                            <span class="dept-percent">{{ dept.percentage }}%</span>
+                        </div>
+                    {% empty %}
+                        <div class="text-center py-4 text-muted">
+                            <i class="fas fa-chart-pie fa-2x mb-2 d-block"></i>
+                            <p>No department data available</p>
+                        </div>
+                    {% endfor %}
                 </div>
             </div>
-        </section>
+        </div>
 
-        <section class="panel">
-            <div class="panel-header">
-                <h2 class="panel-title">Department Distribution</h2>
+        <!-- Recent Activity -->
+        <div class="col-lg-6">
+            <div class="card h-100">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-clock text-primary me-2"></i>Recent Activity
+                    </h5>
+                    <a href="#" class="btn btn-sm btn-link">View All</a>
+                </div>
+                <div class="card-body p-0">
+                    <div class="p-3">
+                        {% for activity in recent_activities %}
+                            <div class="activity-item">
+                                <div class="activity-icon" style="background: {{ activity.icon_bg }};">
+                                    <i class="{{ activity.icon }}" style="color: {{ activity.icon_color }};"></i>
+                                </div>
+                                <div class="activity-content">
+                                    <div class="title">{{ activity.title }}</div>
+                                    <div class="time">{{ activity.time }}</div>
+                                </div>
+                            </div>
+                        {% empty %}
+                            <div class="text-center py-4 text-muted">
+                                <i class="fas fa-clock fa-2x mb-2 d-block"></i>
+                                <p>No recent activity</p>
+                            </div>
+                        {% endfor %}
+                    </div>
+                </div>
             </div>
-            <div class="donut-wrap">
-                <div class="donut" aria-label="Department distribution chart"></div>
-                <ul class="legend">
-                    <li><span class="legend-dot" style="background:#0d6efd"></span><strong>40%</strong><span>General Medicine</span></li>
-                    <li><span class="legend-dot" style="background:#2fbe7a"></span><strong>20%</strong><span>Pediatrics</span></li>
-                    <li><span class="legend-dot" style="background:#f5a524"></span><strong>15%</strong><span>Surgery</span></li>
-                    <li><span class="legend-dot" style="background:#7b61ff"></span><strong>15%</strong><span>Orthopedics</span></li>
-                    <li><span class="legend-dot" style="background:#8496b6"></span><strong>10%</strong><span>Others</span></li>
-                </ul>
-            </div>
-        </section>
+        </div>
     </div>
 
-    <div class="dashboard-grid-bottom">
-        <section class="panel">
-            <div class="panel-header">
-                <h2 class="panel-title">Recent Appointments</h2>
-                <a class="view-link" href="#">View All</a>
-            </div>
-            <div class="appointment-list">
-                <div class="appointment-row">
-                    <span class="patient-avatar">SJ</span>
-                    <div><p class="row-title">Sarah Johnson</p><p class="row-sub">General Medicine</p></div>
-                    <span class="row-meta"><i class="far fa-calendar"></i>{% now "M j, Y" %}</span>
-                    <span class="row-meta"><i class="far fa-clock"></i>09:30 AM</span>
-                    <span class="status-pill status-good">Confirmed</span>
+    <!-- Quick Actions -->
+    <div class="row g-4 mt-2">
+        <div class="col-12">
+            <h6 class="fw-bold mb-3"><i class="fas fa-bolt text-primary me-2"></i>Quick Actions</h6>
+            <div class="row g-3">
+                <div class="col-md-2 col-4">
+                    <a href="{% url 'patients:create' %}" class="quick-action-btn">
+                        <i class="fas fa-user-plus text-primary"></i>
+                        <span>New Patient</span>
+                    </a>
                 </div>
-                <div class="appointment-row">
-                    <span class="patient-avatar">MB</span>
-                    <div><p class="row-title">Michael Brown</p><p class="row-sub">Pediatrics</p></div>
-                    <span class="row-meta"><i class="far fa-calendar"></i>{% now "M j, Y" %}</span>
-                    <span class="row-meta"><i class="far fa-clock"></i>10:00 AM</span>
-                    <span class="status-pill status-wait">Pending</span>
+                <div class="col-md-2 col-4">
+                    <a href="#" class="quick-action-btn">
+                        <i class="fas fa-calendar-plus text-success"></i>
+                        <span>New Appointment</span>
+                    </a>
                 </div>
-                <div class="appointment-row">
-                    <span class="patient-avatar">ED</span>
-                    <div><p class="row-title">Emily Davis</p><p class="row-sub">Orthopedics</p></div>
-                    <span class="row-meta"><i class="far fa-calendar"></i>{% now "M j, Y" %}</span>
-                    <span class="row-meta"><i class="far fa-clock"></i>11:00 AM</span>
-                    <span class="status-pill status-good">Confirmed</span>
+                <div class="col-md-2 col-4">
+                    <a href="#" class="quick-action-btn">
+                        <i class="fas fa-user-md text-info"></i>
+                        <span>Add Staff</span>
+                    </a>
                 </div>
-                <div class="appointment-row">
-                    <span class="patient-avatar">JW</span>
-                    <div><p class="row-title">James Wilson</p><p class="row-sub">Surgery</p></div>
-                    <span class="row-meta"><i class="far fa-calendar"></i>{% now "M j, Y" %}</span>
-                    <span class="row-meta"><i class="far fa-clock"></i>02:30 PM</span>
-                    <span class="status-pill status-wait">Pending</span>
+                <div class="col-md-2 col-4">
+                    <a href="#" class="quick-action-btn">
+                        <i class="fas fa-file-invoice text-warning"></i>
+                        <span>Generate Report</span>
+                    </a>
                 </div>
-            </div>
-        </section>
-
-        <section class="panel">
-            <div class="panel-header">
-                <h2 class="panel-title">Hospital Updates</h2>
-                <a class="view-link" href="#">View All</a>
-            </div>
-            <div class="updates-list">
-                <div class="update-row">
-                    <span class="update-icon tone-blue"><i class="fas fa-user-doctor"></i></span>
-                    <div><p class="row-title">New doctor Dr. Sarah Wilson joined</p><p class="row-sub">Pediatrics Department</p></div>
-                    <span class="row-meta">2 hours ago</span>
+                <div class="col-md-2 col-4">
+                    <a href="#" class="quick-action-btn">
+                        <i class="fas fa-prescription text-danger"></i>
+                        <span>New Prescription</span>
+                    </a>
                 </div>
-                <div class="update-row">
-                    <span class="update-icon tone-purple"><i class="fas fa-flask"></i></span>
-                    <div><p class="row-title">System maintenance scheduled</p><p class="row-sub">June 25, 2026 at 02:00 AM</p></div>
-                    <span class="row-meta">5 hours ago</span>
-                </div>
-                <div class="update-row">
-                    <span class="update-icon tone-green"><i class="fas fa-microscope"></i></span>
-                    <div><p class="row-title">New lab equipment added</p><p class="row-sub">Pathology Department</p></div>
-                    <span class="row-meta">1 day ago</span>
-                </div>
-                <div class="update-row">
-                    <span class="update-icon tone-blue"><i class="far fa-file-lines"></i></span>
-                    <div><p class="row-title">Monthly report generated</p><p class="row-sub">May 2026 Summary</p></div>
-                    <span class="row-meta">2 days ago</span>
+                <div class="col-md-2 col-4">
+                    <a href="#" class="quick-action-btn">
+                        <i class="fas fa-cog text-secondary"></i>
+                        <span>Settings</span>
+                    </a>
                 </div>
             </div>
-        </section>
-
-        <section class="panel">
-            <div class="panel-header">
-                <h2 class="panel-title">Quick Actions</h2>
-            </div>
-            <div class="quick-actions">
-                <a class="action-btn action-blue" href="#"><i class="far fa-calendar-plus"></i>Book Appointment</a>
-                <a class="action-btn action-green" href="#"><i class="fas fa-user-plus"></i>Add New Patient</a>
-                <a class="action-btn action-purple" href="#"><i class="far fa-file-lines"></i>Generate Report</a>
-                <a class="action-btn action-amber" href="#"><i class="fas fa-capsules"></i>Pharmacy Stock</a>
-                <a class="action-btn action-red" href="#"><i class="fas fa-flask-vial"></i>Lab Test</a>
-            </div>
-        </section>
+        </div>
     </div>
-</section>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Animate progress bars on load
+    document.addEventListener('DOMContentLoaded', function() {
+        const progressFills = document.querySelectorAll('.progress-fill');
+        progressFills.forEach(function(fill) {
+            const width = fill.style.width;
+            fill.style.width = '0%';
+            setTimeout(function() {
+                fill.style.width = width;
+            }, 300);
+        });
+    });
+
+    // Auto-refresh stats every 60 seconds
+    setInterval(function() {
+        fetch('/admin/api/stats/')
+            .then(response => response.json())
+            .then(data => {
+                // Update stats
+                document.querySelector('.stat-number').textContent = data.total_patients;
+                // Update other stats...
+            })
+            .catch(error => console.error('Error:', error));
+    }, 60000);
+</script>
 {% endblock %}

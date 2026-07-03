@@ -1,6 +1,7 @@
 from django.db import models
 from django.contrib.auth import get_user_model
 from datetime import date, datetime
+from django.utils import timezone
 
 User = get_user_model()
 
@@ -25,6 +26,14 @@ class Patient(models.Model):
         ('none', 'None'),
     )
     
+    STATUS_CHOICES = (
+        ('active', 'Active'),
+        ('admitted', 'Admitted'),
+        ('discharged', 'Discharged'),
+        ('referred', 'Referred'),
+        ('inactive', 'Inactive'),
+    )
+    
     # Personal Information
     first_name = models.CharField(max_length=100)
     last_name = models.CharField(max_length=100)
@@ -39,7 +48,15 @@ class Patient(models.Model):
     emergency_contact_name = models.CharField(max_length=100)
     emergency_contact_phone = models.CharField(max_length=15)
     
-    # Medical Information
+    # Medical History
+    allergies = models.TextField(blank=True, help_text="List all allergies")
+    chronic_conditions = models.TextField(blank=True, help_text="Chronic conditions (diabetes, hypertension, etc.)")
+    previous_surgeries = models.TextField(blank=True, help_text="Previous surgeries and procedures")
+    current_medications = models.TextField(blank=True, help_text="Current medications")
+    family_medical_history = models.TextField(blank=True, help_text="Family medical history")
+    medical_history_notes = models.TextField(blank=True, help_text="Additional medical history notes")
+    
+    # Insurance Information
     insurance_type = models.CharField(max_length=20, choices=INSURANCE_CHOICES, default='none')
     insurance_number = models.CharField(max_length=50, blank=True)
     insurance_expiry = models.DateField(null=True, blank=True)
@@ -52,6 +69,9 @@ class Patient(models.Model):
     discharge_date = models.DateTimeField(null=True, blank=True)
     room_number = models.CharField(max_length=10, blank=True)
     bed_number = models.CharField(max_length=10, blank=True)
+    
+    # Status Tracking
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='active')
     
     # Timestamps
     created_at = models.DateTimeField(auto_now_add=True)
@@ -80,9 +100,41 @@ class Patient(models.Model):
             if self.discharge_date:
                 delta = self.discharge_date - self.admission_date
             else:
-                delta = datetime.now() - self.admission_date
+                delta = timezone.now() - self.admission_date
             return delta.days
         return 0
+    
+    @property
+    def display_status(self):
+        if self.is_admitted:
+            return 'Admitted'
+        elif self.status == 'discharged':
+            return 'Discharged'
+        elif self.status == 'referred':
+            return 'Referred'
+        else:
+            return 'Active'
+    
+    def admit(self, room_number=None, bed_number=None):
+        self.is_admitted = True
+        self.admission_date = timezone.now()
+        self.status = 'admitted'
+        if room_number:
+            self.room_number = room_number
+        if bed_number:
+            self.bed_number = bed_number
+        self.save()
+    
+    def discharge(self):
+        self.is_admitted = False
+        self.discharge_date = timezone.now()
+        self.status = 'discharged'
+        self.save()
+    
+    def update_last_visit(self):
+        self.last_visit_date = timezone.now()
+        self.visit_count += 1
+        self.save()
     
     class Meta:
         db_table = 'patients'
@@ -134,13 +186,13 @@ class PatientVisit(models.Model):
                                null=True, blank=True, related_name='assigned_visits',
                                limit_choices_to={'role': 'doctor'})
     
-    # Queue Management (NEW FIELDS)
-    queue_position = models.IntegerField(default=0, help_text="Position in doctor's queue")
-    is_priority_return = models.BooleanField(default=False, help_text="True if returning from lab/imaging - goes to front of queue")
-    return_from_lab = models.BooleanField(default=False, help_text="True if returning from lab")
-    return_from_imaging = models.BooleanField(default=False, help_text="True if returning from imaging")
-    lab_ordered = models.BooleanField(default=False, help_text="True if lab tests were ordered")
-    imaging_ordered = models.BooleanField(default=False, help_text="True if imaging was ordered")
+    # Queue Management
+    queue_position = models.IntegerField(default=0)
+    is_priority_return = models.BooleanField(default=False)
+    return_from_lab = models.BooleanField(default=False)
+    return_from_imaging = models.BooleanField(default=False)
+    lab_ordered = models.BooleanField(default=False)
+    imaging_ordered = models.BooleanField(default=False)
     
     created_by = models.ForeignKey(User, on_delete=models.SET_NULL, 
                                    null=True, related_name='created_visits')
@@ -151,13 +203,11 @@ class PatientVisit(models.Model):
         return f"{self.visit_number} - {self.patient.full_name}"
     
     def mark_as_priority_return(self):
-        """Mark this visit as a priority return (front of queue)"""
         self.is_priority_return = True
         self.queue_position = 0
         self.save()
     
     def remove_priority(self):
-        """Remove priority status after being seen"""
         self.is_priority_return = False
         self.queue_position = 0
         self.return_from_lab = False
@@ -165,18 +215,15 @@ class PatientVisit(models.Model):
         self.save()
     
     def send_to_lab(self):
-        """Send patient to lab"""
         self.status = 'lab'
         self.lab_ordered = True
         self.save()
     
     def send_to_pharmacy(self):
-        """Send patient to pharmacy"""
         self.status = 'pharmacy'
         self.save()
     
     def return_from_lab_to_doctor(self):
-        """Return from lab to doctor's queue (front of line)"""
         self.status = 'with_doctor'
         self.return_from_lab = True
         self.is_priority_return = True
@@ -184,7 +231,6 @@ class PatientVisit(models.Model):
         self.save()
     
     def return_from_imaging_to_doctor(self):
-        """Return from imaging to doctor's queue (front of line)"""
         self.status = 'with_doctor'
         self.return_from_imaging = True
         self.is_priority_return = True
@@ -192,9 +238,8 @@ class PatientVisit(models.Model):
         self.save()
     
     def complete_visit(self):
-        """Mark visit as completed"""
         self.status = 'completed'
-        self.completed_time = datetime.now()
+        self.completed_time = timezone.now()
         self.is_priority_return = False
         self.save()
     

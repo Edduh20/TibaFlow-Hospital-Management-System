@@ -1,0 +1,47 @@
+{% extends 'base.html' %}
+
+{% block title %}Discharge Patient - TibaFlow HMS{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-lg-6">
+            <div class="card">
+                <div class="card-header bg-warning text-dark">
+                    <h4 class="mb-0">
+                        <i class="fas fa-door-open me-2"></i>Discharge Patient
+                    </h4>
+                </div>
+                <div class="card-body">
+                    <div class="text-center mb-4">
+                        <i class="fas fa-user-injured fa-3x text-warning mb-3"></i>
+                        <h5>Discharge {{ patient.full_name }}?</h5>
+                        <p class="text-muted">
+                            <strong>Age:</strong> {{ patient.age }} years<br>
+                            <strong>Phone:</strong> {{ patient.phone_number }}<br>
+                            <strong>Days of Stay:</strong> {{ patient.days_of_stay }} days
+                        </p>
+                    </div>
+
+                    <form method="post">
+                        {% csrf_token %}
+                        <div class="alert alert-warning">
+                            <i class="fas fa-exclamation-triangle me-2"></i>
+                            <small>Discharging this patient will mark them as discharged and free up the room/bed.</small>
+                        </div>
+
+                        <div class="d-flex justify-content-center gap-3">
+                            <a href="{% url 'patients:detail' patient.id %}" class="btn btn-secondary">
+                                <i class="fas fa-arrow-left me-1"></i>Cancel
+                            </a>
+                            <button type="submit" class="btn btn-warning">
+                                <i class="fas fa-door-open me-1"></i>Confirm Discharge
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
