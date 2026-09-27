@@ -100,3 +100,6 @@ nurses/__pycache__/
 api/__pycache__/
 */migrations/
 !*/migrations/__init__.py
+
+# Logs
+logs
