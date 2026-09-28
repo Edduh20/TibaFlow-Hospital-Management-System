@@ -13,6 +13,9 @@
         transition: all 0.3s ease;
         border-left: 4px solid #0d6efd;
         height: 100%;
+        cursor: pointer;
+        position: relative;
+        overflow: hidden;
     }
     .stat-card:hover {
         transform: translateY(-5px);
@@ -21,41 +24,190 @@
     .stat-card .stat-number {
         font-size: 2rem;
         font-weight: 700;
+        font-variant-numeric: tabular-nums;
     }
     .stat-card.total { border-left-color: #0d6efd; }
     .stat-card.admitted { border-left-color: #dc3545; }
     .stat-card.active { border-left-color: #198754; }
     .stat-card.discharged { border-left-color: #6c757d; }
-    
+    .stat-card.active-filter { box-shadow: 0 0 0 2px rgba(13,110,253,0.35), 0 8px 25px rgba(0,0,0,0.1); }
+
+    /* Patient table */
+    .table-responsive { position: relative; }
+    thead.table-light th {
+        position: sticky;
+        top: 0;
+        z-index: 2;
+        cursor: default;
+        user-select: none;
+        white-space: nowrap;
+    }
+    thead.table-light th.sortable { cursor: pointer; }
+    thead.table-light th.sortable:hover { background: #eef1f4; }
+    thead.table-light th.sortable .fa-sort,
+    thead.table-light th.sortable .fa-sort-up,
+    thead.table-light th.sortable .fa-sort-down {
+        font-size: 0.75rem;
+        opacity: 0.4;
+        margin-left: 0.25rem;
+    }
+    thead.table-light th.sortable.active-sort .fa-sort,
+    thead.table-light th.sortable.active-sort .fa-sort-up,
+    thead.table-light th.sortable.active-sort .fa-sort-down { opacity: 1; color: #0d6efd; }
+
     .patient-row {
-        transition: all 0.3s ease;
+        transition: background 0.2s ease, transform 0.2s ease;
+        cursor: pointer;
+        opacity: 0;
+        animation: row-in 0.35s ease forwards;
     }
     .patient-row:hover {
         background: #f8f9fa;
         transform: translateX(5px);
     }
+    @keyframes row-in {
+        from { opacity: 0; transform: translateY(4px); }
+        to   { opacity: 1; transform: translateY(0); }
+    }
+
+    .patient-avatar {
+        width: 34px;
+        height: 34px;
+        border-radius: 50%;
+        background: #e7f1ff;
+        color: #0d6efd;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 700;
+        font-size: 0.8rem;
+        margin-right: 0.6rem;
+        flex-shrink: 0;
+    }
+    .patient-name-cell { display: flex; align-items: center; }
+
     .status-badge {
         font-size: 0.7rem;
         padding: 0.25rem 0.75rem;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.35rem;
     }
+    .status-badge .live-dot {
+        width: 6px; height: 6px; border-radius: 50%;
+        background: currentColor;
+        position: relative;
+    }
+    .status-badge.bg-danger .live-dot::after {
+        content: '';
+        position: absolute; inset: -3px;
+        border-radius: 50%;
+        border: 1.5px solid currentColor;
+        animation: badge-pulse 1.6s ease-out infinite;
+    }
+    @keyframes badge-pulse {
+        0% { transform: scale(0.7); opacity: 0.8; }
+        100% { transform: scale(2); opacity: 0; }
+    }
+
     .empty-state {
         padding: 4rem 1rem;
         text-align: center;
+        animation: fade-in 0.4s ease;
     }
     .empty-state i {
         font-size: 4rem;
         color: #dee2e6;
         margin-bottom: 1rem;
     }
+    @keyframes fade-in {
+        from { opacity: 0; } to { opacity: 1; }
+    }
+
     .filter-section {
         background: #f8f9fa;
         border-radius: 10px;
         padding: 1rem;
     }
+    .filter-section .input-group .btn-clear-search {
+        border: 1px solid #ced4da;
+        border-left: none;
+        background: white;
+        color: #6c757d;
+    }
+
+    .active-filter-chips {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.4rem;
+        margin-top: 0.75rem;
+    }
+    .filter-chip {
+        background: white;
+        border: 1px solid #dee2e6;
+        border-radius: 20px;
+        padding: 0.2rem 0.4rem 0.2rem 0.75rem;
+        font-size: 0.78rem;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.4rem;
+        color: #495057;
+    }
+    .filter-chip button {
+        border: none;
+        background: #e9ecef;
+        width: 18px; height: 18px;
+        border-radius: 50%;
+        line-height: 1;
+        font-size: 0.7rem;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        color: #495057;
+    }
+    .filter-chip button:hover { background: #dc3545; color: white; }
+
+    .results-meta { font-size: 0.85rem; color: #6c757d; }
+
+    .kbd-hint {
+        font-size: 0.72rem;
+        border: 1px solid #dee2e6;
+        border-radius: 4px;
+        padding: 0.05rem 0.35rem;
+        color: #6c757d;
+        background: #fff;
+    }
+
+    #tf-toast-stack {
+        position: fixed;
+        top: 1rem; right: 1rem;
+        z-index: 2000;
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+    .tf-toast {
+        background: #212529;
+        color: white;
+        padding: 0.65rem 1.05rem;
+        border-radius: 8px;
+        font-size: 0.85rem;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        opacity: 0;
+        transform: translateX(20px);
+        transition: all 0.3s ease;
+    }
+    .tf-toast.show { opacity: 1; transform: translateX(0); }
+
+    @media (prefers-reduced-motion: reduce) {
+        .patient-row, .stat-card, .status-badge .live-dot::after { animation: none !important; transition: none !important; }
+    }
 </style>
 {% endblock %}
 
 {% block content %}
+<div id="tf-toast-stack"></div>
+
 <div class="container-fluid">
     <!-- Page Header -->
     <div class="d-flex justify-content-between align-items-center mb-4">
@@ -81,10 +233,10 @@
     {% if stats %}
         <div class="row g-4 mb-4">
             <div class="col-md-3 col-sm-6">
-                <div class="stat-card total">
+                <div class="stat-card total" data-quick-filter="">
                     <div class="d-flex justify-content-between align-items-start">
                         <div>
-                            <div class="stat-number">{{ stats.total }}</div>
+                            <div class="stat-number" data-target="{{ stats.total }}">0</div>
                             <div class="text-muted">Total Patients</div>
                         </div>
                         <div class="text-primary" style="font-size: 2rem; opacity: 0.3;">
@@ -94,10 +246,10 @@
                 </div>
             </div>
             <div class="col-md-3 col-sm-6">
-                <div class="stat-card admitted">
+                <div class="stat-card admitted" data-quick-filter="admitted">
                     <div class="d-flex justify-content-between align-items-start">
                         <div>
-                            <div class="stat-number">{{ stats.admitted }}</div>
+                            <div class="stat-number" data-target="{{ stats.admitted }}">0</div>
                             <div class="text-muted">Admitted</div>
                         </div>
                         <div class="text-danger" style="font-size: 2rem; opacity: 0.3;">
@@ -107,10 +259,10 @@
                 </div>
             </div>
             <div class="col-md-3 col-sm-6">
-                <div class="stat-card active">
+                <div class="stat-card active" data-quick-filter="active">
                     <div class="d-flex justify-content-between align-items-start">
                         <div>
-                            <div class="stat-number">{{ stats.active }}</div>
+                            <div class="stat-number" data-target="{{ stats.active }}">0</div>
                             <div class="text-muted">Active</div>
                         </div>
                         <div class="text-success" style="font-size: 2rem; opacity: 0.3;">
@@ -120,10 +272,10 @@
                 </div>
             </div>
             <div class="col-md-3 col-sm-6">
-                <div class="stat-card discharged">
+                <div class="stat-card discharged" data-quick-filter="discharged">
                     <div class="d-flex justify-content-between align-items-start">
                         <div>
-                            <div class="stat-number">{{ stats.discharged }}</div>
+                            <div class="stat-number" data-target="{{ stats.discharged }}">0</div>
                             <div class="text-muted">Discharged</div>
                         </div>
                         <div class="text-secondary" style="font-size: 2rem; opacity: 0.3;">
@@ -137,17 +289,21 @@
 
     <!-- Search and Filter -->
     <div class="filter-section mb-4">
-        <form method="get" class="row g-3">
+        <form method="get" class="row g-3" id="filterForm">
             <div class="col-md-4">
                 <div class="input-group">
                     <span class="input-group-text"><i class="fas fa-search"></i></span>
-                    <input type="text" name="search" class="form-control" 
-                           placeholder="Search by name, phone, email..." 
-                           value="{{ search|default:'' }}">
+                    <input type="text" name="search" id="searchInput" class="form-control"
+                           placeholder="Search by name, phone, email..."
+                           value="{{ search|default:'' }}" autocomplete="off">
+                    <button type="button" class="btn btn-clear-search" id="clearSearchBtn" title="Clear search" style="{% if not search %}display:none;{% endif %}">
+                        <i class="fas fa-times"></i>
+                    </button>
                 </div>
+                <div class="form-text"><span class="kbd-hint">/</span> to focus search</div>
             </div>
             <div class="col-md-2">
-                <select name="status" class="form-select">
+                <select name="status" id="statusFilter" class="form-select">
                     <option value="">All Status</option>
                     <option value="active" {% if status_filter == 'active' %}selected{% endif %}>Active</option>
                     <option value="admitted" {% if status_filter == 'admitted' %}selected{% endif %}>Admitted</option>
@@ -156,7 +312,7 @@
                 </select>
             </div>
             <div class="col-md-2">
-                <select name="insurance" class="form-select">
+                <select name="insurance" id="insuranceFilter" class="form-select">
                     <option value="">All Insurance</option>
                     <option value="nhif" {% if insurance_filter == 'nhif' %}selected{% endif %}>NHIF</option>
                     <option value="private" {% if insurance_filter == 'private' %}selected{% endif %}>Private</option>
@@ -164,7 +320,7 @@
                 </select>
             </div>
             <div class="col-md-2">
-                <select name="sort" class="form-select">
+                <select name="sort" id="sortSelect" class="form-select">
                     <option value="-created_at" {% if sort == '-created_at' %}selected{% endif %}>Newest</option>
                     <option value="created_at" {% if sort == 'created_at' %}selected{% endif %}>Oldest</option>
                     <option value="first_name" {% if sort == 'first_name' %}selected{% endif %}>Name A-Z</option>
@@ -177,18 +333,39 @@
                 </button>
             </div>
         </form>
+
+        <div class="active-filter-chips" id="activeFilterChips">
+            {% if search %}
+                <span class="filter-chip">Search: "{{ search }}"<button type="button" data-clear="search">&times;</button></span>
+            {% endif %}
+            {% if status_filter %}
+                <span class="filter-chip">Status: {{ status_filter|title }}<button type="button" data-clear="status">&times;</button></span>
+            {% endif %}
+            {% if insurance_filter %}
+                <span class="filter-chip">Insurance: {{ insurance_filter|upper }}<button type="button" data-clear="insurance">&times;</button></span>
+            {% endif %}
+        </div>
     </div>
 
     <!-- Patient Table -->
     <div class="card">
         <div class="card-body p-0">
             {% if patients %}
-                <div class="table-responsive">
+                <div class="d-flex justify-content-between align-items-center px-3 pt-3 results-meta">
+                    <span>
+                        {% if patients.paginator %}
+                            Showing {{ patients.start_index }}&ndash;{{ patients.end_index }} of {{ patients.paginator.count }} patients
+                        {% else %}
+                            {{ patients|length }} patient{{ patients|length|pluralize }}
+                        {% endif %}
+                    </span>
+                </div>
+                <div class="table-responsive" style="max-height: 70vh;">
                     <table class="table table-hover mb-0">
                         <thead class="table-light">
                             <tr>
                                 <th>#</th>
-                                <th>Name</th>
+                                <th class="sortable" data-sort-key="first_name">Name <i class="fas fa-sort"></i></th>
                                 <th>Age</th>
                                 <th>Gender</th>
                                 <th>Phone</th>
@@ -200,12 +377,15 @@
                         </thead>
                         <tbody>
                             {% for patient in patients %}
-                                <tr class="patient-row">
+                                <tr class="patient-row" style="animation-delay: {{ forloop.counter0 }}0ms" data-href="{% url 'patients:detail' patient.id %}">
                                     <td>{{ forloop.counter }}</td>
                                     <td>
-                                        <a href="{% url 'patients:detail' patient.id %}" class="fw-bold">
-                                            {{ patient.full_name }}
-                                        </a>
+                                        <div class="patient-name-cell">
+                                            <span class="patient-avatar">{{ patient.full_name|slice:":1" }}</span>
+                                            <a href="{% url 'patients:detail' patient.id %}" class="fw-bold text-decoration-none">
+                                                {{ patient.full_name }}
+                                            </a>
+                                        </div>
                                     </td>
                                     <td>{{ patient.age }}</td>
                                     <td>{{ patient.get_gender_display }}</td>
@@ -213,31 +393,34 @@
                                     <td>{{ patient.get_insurance_type_display }}</td>
                                     <td>
                                         <span class="badge bg-{% if patient.is_admitted %}danger{% elif patient.status == 'discharged' %}secondary{% elif patient.status == 'referred' %}warning{% else %}success{% endif %} status-badge">
+                                            {% if patient.is_admitted %}<span class="live-dot"></span>{% endif %}
                                             {{ patient.display_status }}
                                         </span>
                                     </td>
                                     <td>{{ patient.visit_count }}</td>
-                                    <td>
+                                    <td onclick="event.stopPropagation();">
                                         <div class="btn-group btn-group-sm">
-                                            <a href="{% url 'patients:detail' patient.id %}" 
+                                            <a href="{% url 'patients:detail' patient.id %}"
                                                class="btn btn-outline-primary" title="View">
                                                 <i class="fas fa-eye"></i>
                                             </a>
                                             {% if user.role in 'reception,admin' %}
-                                                <a href="{% url 'patients:edit' patient.id %}" 
+                                                <a href="{% url 'patients:edit' patient.id %}"
                                                    class="btn btn-outline-secondary" title="Edit">
                                                     <i class="fas fa-edit"></i>
                                                 </a>
                                             {% endif %}
                                             {% if user.role in 'reception,admin,doctor' %}
                                                 {% if not patient.is_admitted %}
-                                                    <a href="{% url 'patients:admit' patient.id %}" 
-                                                       class="btn btn-outline-success" title="Admit">
+                                                    <a href="{% url 'patients:admit' patient.id %}"
+                                                       class="btn btn-outline-success confirm-action" title="Admit"
+                                                       data-confirm="Admit {{ patient.full_name }}?">
                                                         <i class="fas fa-hospital-user"></i>
                                                     </a>
                                                 {% else %}
-                                                    <a href="{% url 'patients:discharge' patient.id %}" 
-                                                       class="btn btn-outline-warning" title="Discharge">
+                                                    <a href="{% url 'patients:discharge' patient.id %}"
+                                                       class="btn btn-outline-warning confirm-action" title="Discharge"
+                                                       data-confirm="Discharge {{ patient.full_name }}?">
                                                         <i class="fas fa-door-open"></i>
                                                     </a>
                                                 {% endif %}
@@ -275,7 +458,7 @@
                                 </a>
                             </li>
                         {% endif %}
-                        
+
                         {% for num in patients.paginator.page_range %}
                             <li class="page-item {% if patients.number == num %}active{% endif %}">
                                 <a class="page-link" href="?page={{ num }}{% if search %}&search={{ search }}{% endif %}{% if status_filter %}&status={{ status_filter }}{% endif %}">
@@ -283,7 +466,7 @@
                                 </a>
                             </li>
                         {% endfor %}
-                        
+
                         {% if patients.has_next %}
                             <li class="page-item">
                                 <a class="page-link" href="?page={{ patients.next_page_number }}{% if search %}&search={{ search }}{% endif %}{% if status_filter %}&status={{ status_filter }}{% endif %}">
@@ -297,4 +480,132 @@
         {% endif %}
     </div>
 </div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+
+    /* ---------- Toast helper ---------- */
+    function showToast(message) {
+        const stack = document.getElementById('tf-toast-stack');
+        const el = document.createElement('div');
+        el.className = 'tf-toast';
+        el.textContent = message;
+        stack.appendChild(el);
+        requestAnimationFrame(() => el.classList.add('show'));
+        setTimeout(() => {
+            el.classList.remove('show');
+            setTimeout(() => el.remove(), 300);
+        }, 2400);
+    }
+
+    /* ---------- Stat count-up ---------- */
+    document.querySelectorAll('.stat-number[data-target]').forEach(function (el) {
+        const target = parseFloat(el.getAttribute('data-target')) || 0;
+        const duration = 900;
+        const start = performance.now();
+        function step(now) {
+            const progress = Math.min((now - start) / duration, 1);
+            const eased = 1 - Math.pow(1 - progress, 3);
+            el.textContent = Math.round(target * eased).toLocaleString();
+            if (progress < 1) requestAnimationFrame(step);
+        }
+        requestAnimationFrame(step);
+    });
+
+    /* ---------- Stat cards act as quick status filters ---------- */
+    const statusFilterSelect = document.getElementById('statusFilter');
+    const filterForm = document.getElementById('filterForm');
+    document.querySelectorAll('.stat-card[data-quick-filter]').forEach(function (card) {
+        const value = card.getAttribute('data-quick-filter');
+        if (statusFilterSelect && statusFilterSelect.value === value && value !== '') {
+            card.classList.add('active-filter');
+        }
+        card.addEventListener('click', function () {
+            if (!statusFilterSelect) return;
+            statusFilterSelect.value = value;
+            filterForm.submit();
+        });
+    });
+
+    /* ---------- Clear search button ---------- */
+    const searchInput = document.getElementById('searchInput');
+    const clearBtn = document.getElementById('clearSearchBtn');
+    function refreshClearBtn() {
+        clearBtn.style.display = searchInput.value ? '' : 'none';
+    }
+    searchInput.addEventListener('input', refreshClearBtn);
+    clearBtn.addEventListener('click', function () {
+        searchInput.value = '';
+        refreshClearBtn();
+        filterForm.submit();
+    });
+
+    /* ---------- Auto-submit on filter/sort change ---------- */
+    ['statusFilter', 'insuranceFilter', 'sortSelect'].forEach(function (id) {
+        const el = document.getElementById(id);
+        if (el) el.addEventListener('change', function () { filterForm.submit(); });
+    });
+
+    /* ---------- Removable filter chips ---------- */
+    document.querySelectorAll('.filter-chip button[data-clear]').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+            const field = btn.getAttribute('data-clear');
+            const el = document.getElementById(
+                field === 'search' ? 'searchInput' :
+                field === 'status' ? 'statusFilter' :
+                field === 'insurance' ? 'insuranceFilter' : null
+            );
+            if (el) el.value = '';
+            filterForm.submit();
+        });
+    });
+
+    /* ---------- "/" focuses search ---------- */
+    document.addEventListener('keydown', function (e) {
+        if (e.key === '/' && document.activeElement !== searchInput) {
+            e.preventDefault();
+            searchInput.focus();
+        }
+    });
+
+    /* ---------- Row click navigates to patient detail ---------- */
+    document.querySelectorAll('.patient-row[data-href]').forEach(function (row) {
+        row.addEventListener('click', function () {
+            window.location.href = row.getAttribute('data-href');
+        });
+    });
+
+    /* ---------- Confirm before admit/discharge ---------- */
+    document.querySelectorAll('.confirm-action').forEach(function (link) {
+        link.addEventListener('click', function (e) {
+            e.stopPropagation();
+            const msg = link.getAttribute('data-confirm') || 'Are you sure?';
+            if (!window.confirm(msg)) {
+                e.preventDefault();
+            } else {
+                showToast('Working on it\u2026');
+            }
+        });
+    });
+
+    /* ---------- Client-side column sort indicator (visual only;
+       actual sorting is server-driven via the Sort dropdown) ---------- */
+    const currentSort = "{{ sort|default:'-created_at' }}";
+    document.querySelectorAll('th.sortable').forEach(function (th) {
+        const key = th.getAttribute('data-sort-key');
+        const icon = th.querySelector('i');
+        if (currentSort.replace('-', '') === key) {
+            th.classList.add('active-sort');
+            icon.className = currentSort.startsWith('-') ? 'fas fa-sort-down' : 'fas fa-sort-up';
+        }
+        th.addEventListener('click', function () {
+            const next = (currentSort === key) ? ('-' + key) : key;
+            sortSelect.value = (sortSelect.querySelector('option[value="' + next + '"]')) ? next : sortSelect.value;
+            if (document.getElementById('sortSelect').value) filterForm.submit();
+        });
+    });
+});
+</script>
 {% endblock %}
